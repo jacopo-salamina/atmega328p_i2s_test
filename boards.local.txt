@@ -1,0 +1,48 @@
+# See: https://arduino.github.io/arduino-cli/latest/platform-specification/
+
+# menu.cpu=Processor
+
+menu.cpp_standard=C++ standard
+menu.optimization_flags=Optimization flags
+
+##############################################################
+
+# uno.name=Arduino Uno
+
+# uno.build.mcu=atmega328p
+# uno.build.f_cpu=16000000L
+# uno.build.board=AVR_UNO
+# uno.build.core=arduino
+# uno.build.variant=standard
+
+uno.compiler.optimization_flags=-Os
+uno.compiler.cpp.standard=gnu++11
+uno.compiler.c.flags=-c -g {compiler.optimization_flags} {compiler.warning_flags} -std=c11 -ffunction-sections -fdata-sections -MMD -flto -fno-fat-lto-objects
+uno.compiler.c.elf.flags={compiler.warning_flags} {compiler.optimization_flags} -g -flto -fuse-linker-plugin -Wl,--gc-sections
+uno.compiler.cpp.flags=-c -g {compiler.optimization_flags} {compiler.warning_flags} -std={compiler.cpp.standard} -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics -Wno-error=narrowing -MMD -flto
+
+uno.menu.cpp_standard.gnuxx11=GNU++11
+uno.menu.cpp_standard.gnuxx11.compiler.cpp.standard=gnu++11
+
+uno.menu.cpp_standard.cxx17=C++17
+uno.menu.cpp_standard.cxx17.compiler.cpp.standard=c++17
+
+uno.menu.optimization_flags.space=Space (-Os)
+uno.menu.optimization_flags.space.compiler.optimization_flags=-Os
+
+uno.menu.optimization_flags.speed-0=Speed (-O0)
+uno.menu.optimization_flags.speed-0.compiler.optimization_flags=-O0
+
+uno.menu.optimization_flags.speed-1=Speed (-O1)
+uno.menu.optimization_flags.speed-1.compiler.optimization_flags=-O1
+
+uno.menu.optimization_flags.speed-2=Speed (-O2)
+uno.menu.optimization_flags.speed-2.compiler.optimization_flags=-O2
+
+uno.menu.optimization_flags.speed-3=Speed (-O3)
+uno.menu.optimization_flags.speed-3.compiler.optimization_flags=-O3
+
+uno.menu.optimization_flags.debug=Debugging (-Og)
+uno.menu.optimization_flags.debug.compiler.optimization_flags=-Og
+
+##############################################################
