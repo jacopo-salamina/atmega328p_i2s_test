@@ -1,0 +1,238 @@
+
+/tmp/arduino_build_669111/atmega328p_i2s_test.ino.elf:     file format elf32-avr
+
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0c 94 34 00 	jmp	0x68	; 0x68 <__ctors_end>
+   4:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+   8:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+   c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  10:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  14:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  18:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  1c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  20:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  24:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  28:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  2c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  30:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  34:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  38:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  3c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  40:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  44:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  48:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  4c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  50:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  54:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  58:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  5c:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  60:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+  64:	0c 94 3e 00 	jmp	0x7c	; 0x7c <__bad_interrupt>
+
+00000068 <__ctors_end>:
+  68:	11 24       	eor	r1, r1
+  6a:	1f be       	out	0x3f, r1	; 63
+  6c:	cf ef       	ldi	r28, 0xFF	; 255
+  6e:	d8 e0       	ldi	r29, 0x08	; 8
+  70:	de bf       	out	0x3e, r29	; 62
+  72:	cd bf       	out	0x3d, r28	; 61
+  74:	0e 94 40 00 	call	0x80	; 0x80 <main>
+  78:	0c 94 7f 00 	jmp	0xfe	; 0xfe <_exit>
+
+0000007c <__bad_interrupt>:
+  7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
+
+00000080 <main>:
+    TIFR2 = 0;
+    // SAFE PROCEDURE END (we don't need interrupts)
+  }
+public:
+  I2SDriver() {
+    noInterrupts();
+  80:	f8 94       	cli
+    GTCCR = bit(TSM) | bit(PSRASY) | bit(PSRSYNC);
+  82:	83 e8       	ldi	r24, 0x83	; 131
+  84:	83 bd       	out	0x23, r24	; 35
+
+class I2SDriver {
+private:
+  void configureTimer0() {
+    // Fast PWM (mode 7, continues below), prescaler set to 8
+    TCCR0B = bit(WGM02) | bit(CS01);
+  86:	2a e0       	ldi	r18, 0x0A	; 10
+  88:	25 bd       	out	0x25, r18	; 37
+    // OC0A toggle mode operation, OC0B normal mode operation, fast PWM (mode 7)
+    TCCR0A = bit(COM0A0) | bit(WGM01) | bit(WGM00);
+  8a:	93 e4       	ldi	r25, 0x43	; 67
+  8c:	94 bd       	out	0x24, r25	; 36
+    TCNT0 = 0;
+  8e:	16 bc       	out	0x26, r1	; 38
+    OCR0A = 0;
+  90:	17 bc       	out	0x27, r1	; 39
+     * For timer 2 we'll be using a "safe procedure" described in section 17.9
+     * for switching to/from asynchronous mode.
+     */
+    // SAFE PROCEDURE START
+    // Disable interrupts.
+    TIMSK2 = 0;
+  92:	10 92 70 00 	sts	0x0070, r1	; 0x800070 <__DATA_REGION_ORIGIN__+0x10>
+    // Enable synchronous mode
+    bitClear(ASSR, AS2);
+  96:	80 91 b6 00 	lds	r24, 0x00B6	; 0x8000b6 <__DATA_REGION_ORIGIN__+0x56>
+  9a:	8f 7d       	andi	r24, 0xDF	; 223
+  9c:	80 93 b6 00 	sts	0x00B6, r24	; 0x8000b6 <__DATA_REGION_ORIGIN__+0x56>
+    // Configure TCNT2, OCR2x and TCCR2x
+    // Fast PWM (mode 7, continues below), prescaler set to 8
+    TCCR2B = bit(WGM22) | bit(CS21);
+  a0:	20 93 b1 00 	sts	0x00B1, r18	; 0x8000b1 <__DATA_REGION_ORIGIN__+0x51>
+    // OC2A toggle mode operation, OC2B normal operation mode, fast PWM (mode 7)
+    TCCR2A = bit(COM2A0) | bit(WGM21) | bit(WGM20);
+  a4:	90 93 b0 00 	sts	0x00B0, r25	; 0x8000b0 <__DATA_REGION_ORIGIN__+0x50>
+    TCNT2 = 0;
+  a8:	10 92 b2 00 	sts	0x00B2, r1	; 0x8000b2 <__DATA_REGION_ORIGIN__+0x52>
+    OCR2A = 15;
+  ac:	8f e0       	ldi	r24, 0x0F	; 15
+  ae:	80 93 b3 00 	sts	0x00B3, r24	; 0x8000b3 <__DATA_REGION_ORIGIN__+0x53>
+    // Clear the interrupt flags
+    TIFR2 = 0;
+  b2:	17 ba       	out	0x17, r1	; 23
+    noInterrupts();
+    GTCCR = bit(TSM) | bit(PSRASY) | bit(PSRSYNC);
+    configureTimer0();
+    configureTimer2();
+    // Set pin n. 6 as output (for data clock)
+    bitSet(DDRD, DDD6);
+  b4:	56 9a       	sbi	0x0a, 6	; 10
+    /*
+     * Set pin n. 11 and 12 as output; the former is needed for word select
+     * clock, while the latter for sending the actual data.
+     */
+    DDRB |= bit(DDD3) | bit(DDD4);
+  b6:	84 b1       	in	r24, 0x04	; 4
+  b8:	88 61       	ori	r24, 0x18	; 24
+  ba:	84 b9       	out	0x04, r24	; 4
+    bitClear(GTCCR, TSM);
+  bc:	83 b5       	in	r24, 0x23	; 35
+  be:	8f 77       	andi	r24, 0x7F	; 127
+  c0:	83 bd       	out	0x23, r24	; 35
+	__asm__ volatile (
+		"1: dec %0" "\n\t"
+		"brne 1b"
+		: "=r" (__count)
+		: "0" (__count)
+	);
+  c2:	8a e2       	ldi	r24, 0x2A	; 42
+  c4:	8a 95       	dec	r24
+  c6:	f1 f7       	brne	.-4      	; 0xc4 <main+0x44>
+  if (T < 3 * 256) {
+    if (T >= 3) {
+      _delay_loop_1(T / 3);
+    }
+    if (T % 3 > 1) {
+      _NOP();
+  c8:	00 00       	nop
+    }
+    if (T % 3 > 0) {
+      _NOP();
+  ca:	00 00       	nop
+  cc:	34 e0       	ldi	r19, 0x04	; 4
+  ce:	23 e2       	ldi	r18, 0x23	; 35
+	__asm__ volatile (
+		"1: sbiw %0,1" "\n\t"
+		"brne 1b"
+		: "=w" (__count)
+		: "0" (__count)
+	);
+  d0:	4f eb       	ldi	r20, 0xBF	; 191
+  d2:	51 e1       	ldi	r21, 0x11	; 17
+
+
+const uint8_t halfSquareWaveSamples = F_CPU / (16L * 8 * 2 * 440);
+
+
+int main() {
+  d4:	8e e8       	ldi	r24, 0x8E	; 142
+     * constants.
+     * Because of this, timer 2 's counter should read 0 (prescaler 4).
+     */
+    for (uint8_t i = 0; i < halfSquareWaveSamples; i++) {
+      // Timer 2's counter should read 0 (prescaler 5).
+      bitSet(PORTB, PORTB4);
+  d6:	2c 9a       	sbi	0x05, 4	; 5
+	__asm__ volatile (
+		"1: dec %0" "\n\t"
+		"brne 1b"
+		: "=r" (__count)
+		: "0" (__count)
+	);
+  d8:	93 2f       	mov	r25, r19
+  da:	9a 95       	dec	r25
+  dc:	f1 f7       	brne	.-4      	; 0xda <main+0x5a>
+  if (T < 3 * 256) {
+    if (T >= 3) {
+      _delay_loop_1(T / 3);
+    }
+    if (T % 3 > 1) {
+      _NOP();
+  de:	00 00       	nop
+    }
+    if (T % 3 > 0) {
+      _NOP();
+  e0:	00 00       	nop
+      // Timer 2's counter should read 0 (prescaler 7).
+      delayInCycles<14>();
+      // Timer 2's counter should read 2 (prescaler 5, two overflows).
+      bitClear(PORTB, PORTB4);
+  e2:	2c 98       	cbi	0x05, 4	; 5
+  e4:	92 2f       	mov	r25, r18
+  e6:	9a 95       	dec	r25
+  e8:	f1 f7       	brne	.-4      	; 0xe6 <main+0x66>
+  if (T < 3 * 256) {
+    if (T >= 3) {
+      _delay_loop_1(T / 3);
+    }
+    if (T % 3 > 1) {
+      _NOP();
+  ea:	00 00       	nop
+    }
+    if (T % 3 > 0) {
+      _NOP();
+  ec:	00 00       	nop
+  ee:	81 50       	subi	r24, 0x01	; 1
+    /*
+     * Before entering the loop, the compiler had to initialize 4 registers with
+     * constants.
+     * Because of this, timer 2 's counter should read 0 (prescaler 4).
+     */
+    for (uint8_t i = 0; i < halfSquareWaveSamples; i++) {
+  f0:	91 f7       	brne	.-28     	; 0xd6 <main+0x56>
+	__asm__ volatile (
+		"1: sbiw %0,1" "\n\t"
+		"brne 1b"
+		: "=w" (__count)
+		: "0" (__count)
+	);
+  f2:	ca 01       	movw	r24, r20
+  f4:	01 97       	sbiw	r24, 0x01	; 1
+  f6:	f1 f7       	brne	.-4      	; 0xf4 <main+0x74>
+    _delay_loop_2(T / 4);
+    if (T % 4 > 2) {
+      _NOP();
+    }
+    if (T % 4 > 1) {
+      _NOP();
+  f8:	00 00       	nop
+    }
+    if (T % 4 > 0) {
+      _NOP();
+  fa:	00 00       	nop
+  fc:	eb cf       	rjmp	.-42     	; 0xd4 <main+0x54>
+
+000000fe <_exit>:
+  fe:	f8 94       	cli
+
+00000100 <__stop_program>:
+ 100:	ff cf       	rjmp	.-2      	; 0x100 <__stop_program>
