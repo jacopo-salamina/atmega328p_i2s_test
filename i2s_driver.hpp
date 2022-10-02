@@ -44,7 +44,7 @@ public:
      * Set pin n. 11 and 12 as output; the former is needed for word select
      * clock, while the latter for sending the actual data.
      */
-    DDRB |= bit(DDD3) | bit(DDD4);
+    DDRB |= bit(DDB3) | bit(DDB4);
     bitClear(GTCCR, TSM);
     /*
      * Based on some experiments, after stopping synchronization mode, both 
