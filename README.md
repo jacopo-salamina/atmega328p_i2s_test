@@ -97,8 +97,8 @@ and one of the project's future design changes might involve using the SPI for
 the data signal.
 
 According to I2S' specifications, the word select signal must change during the
-bit clock's falling edge. New revisions will ensure this by configuring the
-output compare registers before starting the timers.
+bit clock's falling edge. Luckily, the timers' basic configuration already ensures
+this (see `i2s_driver.hpp` for more details).
 
 ### Timers synchronization
 

@@ -47,17 +47,30 @@ public:
     DDRB |= bit(DDD3) | bit(DDD4);
     bitClear(GTCCR, TSM);
     /*
-     * Based on some experiments, both timers instantly switch their pin to high
-     * as soon as we stop synchronization mode (by default). In fact:
-     * - if we change the input line as soon as timer 2's counter reads an even
-     *   number (and prescaler 0), the audio starts glitching (because we're
-     *   violating the minimum setup and hold time);
+     * Based on some experiments, after stopping synchronization mode, both 
+     * timers stay still for 16 CPU cycles, then their respective counters
+     * get increased (with overflow detection). Moreover, both output compare
+     * pins are set to 0 within the first 16 cycles. In fact:
+     * - if we change the input line as soon as timer 2's counter reads an odd
+     *   number (and prescaler 0), the audio starts glitching (because that's
+     *   when timer 0 outputs a rising edge, thus we're violating the minimum
+     *   setup and hold time);
      * - if we start sending bytes right after starting the timers, then send
      *   nothing after timer 2 overflows, then sending back stuff when it
-     *   overflows again, etc., we get sounds only on the right channel (word
-     *   select set to 1 => right channel data).
-     * This reveals a major flaw: when the word select changes, the bit clock
-     * line goes high (instead of low).
+     *   overflows again, etc., we get sounds only on the left channel (word
+     *   select set to 0 => left channel data), except then the very first bit
+     *   is set to 1 (that bit is actually the LSB of the value sent to the right
+     *   channel);
+     * - as for the 16 cycles initial delay, I couldn't figure out the reason for
+     *   the first 8 cycles, but the last 8 make sense, since that's the time
+     *   needed for the prescalers to produce a new timer tick; if TCNT0 is set
+     *   to 255 the 16 cycles delay still applies (after the very first timer
+     *   tick, the counter overflows, goes back to 0 and the output pin is
+     *   toggled), while setting TCNT0 to 254 brings the delay to 24 cycles (the
+     *   first timer tick moves the counter to 255, so there's no overflow, while
+     *   the second tick makes the counter overflow and the output pin toggle).
+     * We got lucky: when the word select changes, the bit clock line goes low,
+     * as the I2S protocol specifies.
      */
   }
 };

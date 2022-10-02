@@ -22,23 +22,26 @@ int main() {
     /*
      * Before entering the loop, the compiler had to initialize 4 registers with
      * constants.
-     * Because of this, timer 2 's counter should read 0 (prescaler 4).
+     * Because of this, timer 2 's counter should read 7 (prescaler 4).
      */
     for (uint8_t i = 0; i < halfSquareWaveSamples; i++) {
-      // Timer 2's counter should read 0 (prescaler 5).
+      // Timer 2's counter should read 7 (prescaler 5).
       bitSet(PORTB, PORTB4);
-      // Timer 2's counter should read 0 (prescaler 7).
+      // Timer 2's counter should read 7 (prescaler 7).
       delayInCycles<14>();
-      // Timer 2's counter should read 2 (prescaler 5, two overflows).
+      /*
+       * Timer 2's counter should read 1 (one overflow, prescaler 5 with two
+       * overflows).
+       */
       bitClear(PORTB, PORTB4);
       /*
-       * Timer 2's counter should read 2 (prescaler 7).
+       * Timer 2's counter should read 1 (prescaler 7).
        * Also, it takes 3 cycles to start a new loop run.
        */
       delayInCycles<107>();
     }
     /*
-     * Timer 2's counter should read 0 (prescaler 4).
+     * Timer 2's counter should read 7 (prescaler 4).
      * Also, it takes 2 cycles to go back to the start of the outer loop.
      */
     delayInCycles<halfSquareWaveSamples * 128 - 2>();
