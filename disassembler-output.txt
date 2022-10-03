@@ -44,8 +44,8 @@ Disassembly of section .text:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 00000080 <main>:
-  static const uint8_t BIT_PERIOD = 16;
-  static const uint16_t SAMPLE_PERIOD = BIT_PERIOD * SAMPLE_WIDTH;
+   * right channel)
+   */
   static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
 
   I2SDriver() {
@@ -54,7 +54,7 @@ Disassembly of section .text:
     GTCCR = bit(TSM) | bit(PSRASY) | bit(PSRSYNC);
   82:	83 e8       	ldi	r24, 0x83	; 131
   84:	83 bd       	out	0x23, r24	; 35
->
+template<uint8_t SAMPLE_WIDTH>
 class I2SDriver {
 private:
   void configureTimer0() {
@@ -143,10 +143,10 @@ const uint8_t SAMPLE_WIDTH = 12;
 int main() {
   d0:	8e e5       	ldi	r24, 0x5E	; 94
      * constants.
-     * Because of this, timer 2 's counter should read 7 (prescaler 4).
+     * Because of this, timer 2 's counter should read 23 (prescaler 4).
      */
     for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
-      // Timer 2's counter should read 7 (prescaler 5).
+      // Timer 2's counter should read 23 (prescaler 5).
       bitSet(PORTB, PORTB4);
   d2:	2c 9a       	sbi	0x05, 4	; 5
 	__asm__ volatile (
@@ -183,7 +183,7 @@ int main() {
     /*
      * Before entering the loop, the compiler had to initialize 4 registers with
      * constants.
-     * Because of this, timer 2 's counter should read 7 (prescaler 4).
+     * Because of this, timer 2 's counter should read 23 (prescaler 4).
      */
     for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
   e8:	a1 f7       	brne	.-24     	; 0xd2 <main+0x52>
