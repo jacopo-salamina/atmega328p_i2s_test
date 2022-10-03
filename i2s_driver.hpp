@@ -1,10 +1,34 @@
 #include <avr/io.h>
 #include "type_traits_clone.hpp"
 
-template<
-  uint8_t SAMPLE_WIDTH,
-  enable_if_t<SAMPLE_WIDTH >= 8, int> = 0
->
+
+/**
+ * Template class used to configure and start the I2S-related clock signals (bit
+ * clock and word select).
+ * 
+ * The clock signals are produced using two timers; timer 0 generates the bit
+ * clock signal, while timer 2 generates the word select signal. Both timers
+ * run with a clock divider of 8, and their output compare units work in toggle
+ * mode (each unit's state is toggled once its timer's counter goes back to 0).
+ * Moreover, timer 0 is configured with OCR0A = 0, which gives us a clock
+ * signal of 1 MHz.
+ * The above configuration was chosen for producing a fixed bitrate of 1.000.000
+ * bits/s, which lets us produce audio signals with an acceptable sample range
+ * and sample rate; moreover, since both timers are using the prescaler,
+ * starting and stopping them is rather straightforward, thanks to the GTCCR
+ * register.
+ * 
+ * At the moment, the only external configuration parameter is SAMPLE_WIDTH,
+ * which is the number of bits available for a single sample (per single
+ * channel). Since the bitrate is fixed, raising SAMPLE_WIDTH will always lower
+ * the sample rate, and viceversa. I usually set this value to 12 bits, which
+ * gives me a sample rate of 1.000.000 / (2 * 12) ~= 41.6 kHz.
+ * 
+ * Additionally, this class provides some constants which represent various
+ * clock-related periods (in CPU cycles) and come in handy during cycle
+ * counting and generating signals with an accurate frequency.
+ */
+template<uint8_t SAMPLE_WIDTH>
 class I2SDriver {
 private:
   void configureTimer0() {
@@ -38,8 +62,19 @@ private:
     // SAFE PROCEDURE END (we don't need interrupts)
   }
 public:
+  /// The number of CPU cycles between two consecutive bits
   static const uint8_t BIT_PERIOD = 16;
+  /**
+   * The number of CPU cycles between two consecutive audio samples (keep in
+   * mind that a sample has to be produced for each channel)
+   */
   static const uint16_t SAMPLE_PERIOD = BIT_PERIOD * SAMPLE_WIDTH;
+  /**
+   * The number of CPU cycles between two consecutive audio frames (a frame
+   * consists of a pair of audio samples which will be played at the same time;
+   * the first sample is for the left channel and the second one is for the
+   * right channel)
+   */
   static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
 
   I2SDriver() {
@@ -68,16 +103,17 @@ public:
      *   nothing after timer 2 overflows, then sending back stuff when it
      *   overflows again, etc., we get sounds only on the left channel (word
      *   select set to 0 => left channel data), except then the very first bit
-     *   is set to 1 (that bit is actually the LSB of the value sent to the right
-     *   channel);
-     * - as for the 16 cycles initial delay, I couldn't figure out the reason for
-     *   the first 8 cycles, but the last 8 make sense, since that's the time
-     *   needed for the prescalers to produce a new timer tick; if TCNT0 is set
-     *   to 255 the 16 cycles delay still applies (after the very first timer
-     *   tick, the counter overflows, goes back to 0 and the output pin is
+     *   is set to 1 (that bit is actually the LSB of the value sent to the
+     *   right channel);
+     * - as for the 16 cycles initial delay, I couldn't figure out the reason
+     *   for the first 8 cycles, but the last 8 make sense, since that's the
+     *   time needed for the prescalers to produce a new timer tick; if TCNT0 is
+     *   set to 255 the 16 cycles delay still applies (after the very first
+     *   timer tick, the counter overflows, goes back to 0 and the output pin is
      *   toggled), while setting TCNT0 to 254 brings the delay to 24 cycles (the
-     *   first timer tick moves the counter to 255, so there's no overflow, while
-     *   the second tick makes the counter overflow and the output pin toggle).
+     *   first timer tick moves the counter to 255, so there's no overflow,
+     *   while the second tick makes the counter overflow and the output pin
+     *   toggle).
      * We got lucky: when the word select changes, the bit clock line goes low,
      * as the I2S protocol specifies.
      */
