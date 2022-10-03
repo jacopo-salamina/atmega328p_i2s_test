@@ -44,17 +44,17 @@ Disassembly of section .text:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 00000080 <main>:
-    TIFR2 = 0;
-    // SAFE PROCEDURE END (we don't need interrupts)
-  }
-public:
+  static const uint8_t BIT_PERIOD = 16;
+  static const uint16_t SAMPLE_PERIOD = BIT_PERIOD * SAMPLE_WIDTH;
+  static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
+
   I2SDriver() {
     noInterrupts();
   80:	f8 94       	cli
     GTCCR = bit(TSM) | bit(PSRASY) | bit(PSRSYNC);
   82:	83 e8       	ldi	r24, 0x83	; 131
   84:	83 bd       	out	0x23, r24	; 35
-
+>
 class I2SDriver {
 private:
   void configureTimer0() {
@@ -91,7 +91,7 @@ private:
   a4:	90 93 b0 00 	sts	0x00B0, r25	; 0x8000b0 <__DATA_REGION_ORIGIN__+0x50>
     TCNT2 = 0;
   a8:	10 92 b2 00 	sts	0x00B2, r1	; 0x8000b2 <__DATA_REGION_ORIGIN__+0x52>
-    OCR2A = 15;
+    OCR2A = SAMPLE_WIDTH * 2 - 1;
   ac:	8f e0       	ldi	r24, 0x0F	; 15
   ae:	80 93 b3 00 	sts	0x00B3, r24	; 0x8000b3 <__DATA_REGION_ORIGIN__+0x53>
     // Clear the interrupt flags
@@ -148,7 +148,7 @@ private:
   d2:	51 e1       	ldi	r21, 0x11	; 17
 
 
-const uint8_t halfSquareWaveSamples = F_CPU / (16L * 8 * 2 * 440);
+const uint8_t SAMPLE_WIDTH = 8;
 
 
 int main() {
@@ -156,7 +156,7 @@ int main() {
      * constants.
      * Because of this, timer 2 's counter should read 7 (prescaler 4).
      */
-    for (uint8_t i = 0; i < halfSquareWaveSamples; i++) {
+    for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
       // Timer 2's counter should read 7 (prescaler 5).
       bitSet(PORTB, PORTB4);
   d6:	2c 9a       	sbi	0x05, 4	; 5
@@ -180,7 +180,7 @@ int main() {
     if (T % 3 > 0) {
       _NOP();
   e0:	00 00       	nop
-      delayInCycles<14>();
+      delayInCycles<driver.BIT_PERIOD - 2>();
       /*
        * Timer 2's counter should read 1 (one overflow, prescaler 5 with two
        * overflows).
@@ -207,7 +207,7 @@ int main() {
      * constants.
      * Because of this, timer 2 's counter should read 7 (prescaler 4).
      */
-    for (uint8_t i = 0; i < halfSquareWaveSamples; i++) {
+    for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
   f0:	91 f7       	brne	.-28     	; 0xd6 <main+0x56>
 	__asm__ volatile (
 		"1: sbiw %0,1" "\n\t"

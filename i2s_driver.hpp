@@ -1,5 +1,10 @@
 #include <avr/io.h>
+#include "type_traits_clone.hpp"
 
+template<
+  uint8_t SAMPLE_WIDTH,
+  enable_if_t<SAMPLE_WIDTH >= 8, int> = 0
+>
 class I2SDriver {
 private:
   void configureTimer0() {
@@ -27,12 +32,16 @@ private:
     // OC2A toggle mode operation, OC2B normal operation mode, fast PWM (mode 7)
     TCCR2A = bit(COM2A0) | bit(WGM21) | bit(WGM20);
     TCNT2 = 0;
-    OCR2A = 15;
+    OCR2A = SAMPLE_WIDTH * 2 - 1;
     // Clear the interrupt flags
     TIFR2 = 0;
     // SAFE PROCEDURE END (we don't need interrupts)
   }
 public:
+  static const uint8_t BIT_PERIOD = 16;
+  static const uint16_t SAMPLE_PERIOD = BIT_PERIOD * SAMPLE_WIDTH;
+  static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
+
   I2SDriver() {
     noInterrupts();
     GTCCR = bit(TSM) | bit(PSRASY) | bit(PSRSYNC);
