@@ -38,7 +38,7 @@ Disassembly of section .text:
   70:	de bf       	out	0x3e, r29	; 62
   72:	cd bf       	out	0x3d, r28	; 61
   74:	0e 94 40 00 	call	0x80	; 0x80 <main>
-  78:	0c 94 7f 00 	jmp	0xfe	; 0xfe <_exit>
+  78:	0c 94 7b 00 	jmp	0xf6	; 0xf6 <_exit>
 
 0000007c <__bad_interrupt>:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
@@ -92,7 +92,7 @@ private:
     TCNT2 = 0;
   a8:	10 92 b2 00 	sts	0x00B2, r1	; 0x8000b2 <__DATA_REGION_ORIGIN__+0x52>
     OCR2A = SAMPLE_WIDTH * 2 - 1;
-  ac:	8f e0       	ldi	r24, 0x0F	; 15
+  ac:	87 e1       	ldi	r24, 0x17	; 23
   ae:	80 93 b3 00 	sts	0x00B3, r24	; 0x8000b3 <__DATA_REGION_ORIGIN__+0x53>
     // Clear the interrupt flags
     TIFR2 = 0;
@@ -122,117 +122,95 @@ private:
 		: "=r" (__count)
 		: "0" (__count)
 	);
-  c2:	8a e2       	ldi	r24, 0x2A	; 42
+  c2:	80 e4       	ldi	r24, 0x40	; 64
   c4:	8a 95       	dec	r24
   c6:	f1 f7       	brne	.-4      	; 0xc4 <main+0x44>
-  if (T < 3 * 256) {
-    if (T >= 3) {
-      _delay_loop_1(T / 3);
-    }
-    if (T % 3 > 1) {
-      _NOP();
-  c8:	00 00       	nop
-    }
-    if (T % 3 > 0) {
-      _NOP();
-  ca:	00 00       	nop
-  cc:	34 e0       	ldi	r19, 0x04	; 4
-  ce:	23 e2       	ldi	r18, 0x23	; 35
+  c8:	34 e0       	ldi	r19, 0x04	; 4
+  ca:	29 e3       	ldi	r18, 0x39	; 57
 	__asm__ volatile (
 		"1: sbiw %0,1" "\n\t"
 		"brne 1b"
 		: "=w" (__count)
 		: "0" (__count)
 	);
-  d0:	4f eb       	ldi	r20, 0xBF	; 191
-  d2:	51 e1       	ldi	r21, 0x11	; 17
+  cc:	4f e9       	ldi	r20, 0x9F	; 159
+  ce:	51 e1       	ldi	r21, 0x11	; 17
 
 
-const uint8_t SAMPLE_WIDTH = 8;
+const uint8_t SAMPLE_WIDTH = 12;
 
 
 int main() {
-  d4:	8e e8       	ldi	r24, 0x8E	; 142
+  d0:	8e e5       	ldi	r24, 0x5E	; 94
      * constants.
      * Because of this, timer 2 's counter should read 7 (prescaler 4).
      */
     for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
       // Timer 2's counter should read 7 (prescaler 5).
       bitSet(PORTB, PORTB4);
-  d6:	2c 9a       	sbi	0x05, 4	; 5
+  d2:	2c 9a       	sbi	0x05, 4	; 5
 	__asm__ volatile (
 		"1: dec %0" "\n\t"
 		"brne 1b"
 		: "=r" (__count)
 		: "0" (__count)
 	);
-  d8:	93 2f       	mov	r25, r19
-  da:	9a 95       	dec	r25
-  dc:	f1 f7       	brne	.-4      	; 0xda <main+0x5a>
+  d4:	93 2f       	mov	r25, r19
+  d6:	9a 95       	dec	r25
+  d8:	f1 f7       	brne	.-4      	; 0xd6 <main+0x56>
   if (T < 3 * 256) {
     if (T >= 3) {
       _delay_loop_1(T / 3);
     }
     if (T % 3 > 1) {
       _NOP();
-  de:	00 00       	nop
+  da:	00 00       	nop
     }
     if (T % 3 > 0) {
       _NOP();
-  e0:	00 00       	nop
+  dc:	00 00       	nop
       delayInCycles<driver.BIT_PERIOD - 2>();
       /*
        * Timer 2's counter should read 1 (one overflow, prescaler 5 with two
        * overflows).
        */
       bitClear(PORTB, PORTB4);
-  e2:	2c 98       	cbi	0x05, 4	; 5
-  e4:	92 2f       	mov	r25, r18
-  e6:	9a 95       	dec	r25
-  e8:	f1 f7       	brne	.-4      	; 0xe6 <main+0x66>
-  if (T < 3 * 256) {
-    if (T >= 3) {
-      _delay_loop_1(T / 3);
-    }
-    if (T % 3 > 1) {
-      _NOP();
-  ea:	00 00       	nop
-    }
-    if (T % 3 > 0) {
-      _NOP();
-  ec:	00 00       	nop
-  ee:	81 50       	subi	r24, 0x01	; 1
+  de:	2c 98       	cbi	0x05, 4	; 5
+  e0:	92 2f       	mov	r25, r18
+  e2:	9a 95       	dec	r25
+  e4:	f1 f7       	brne	.-4      	; 0xe2 <main+0x62>
+  e6:	81 50       	subi	r24, 0x01	; 1
     /*
      * Before entering the loop, the compiler had to initialize 4 registers with
      * constants.
      * Because of this, timer 2 's counter should read 7 (prescaler 4).
      */
     for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
-  f0:	91 f7       	brne	.-28     	; 0xd6 <main+0x56>
+  e8:	a1 f7       	brne	.-24     	; 0xd2 <main+0x52>
 	__asm__ volatile (
 		"1: sbiw %0,1" "\n\t"
 		"brne 1b"
 		: "=w" (__count)
 		: "0" (__count)
 	);
-  f2:	ca 01       	movw	r24, r20
-  f4:	01 97       	sbiw	r24, 0x01	; 1
-  f6:	f1 f7       	brne	.-4      	; 0xf4 <main+0x74>
+  ea:	ca 01       	movw	r24, r20
+  ec:	01 97       	sbiw	r24, 0x01	; 1
+  ee:	f1 f7       	brne	.-4      	; 0xec <main+0x6c>
     _delay_loop_2(T / 4);
     if (T % 4 > 2) {
       _NOP();
     }
     if (T % 4 > 1) {
       _NOP();
-  f8:	00 00       	nop
+  f0:	00 00       	nop
     }
     if (T % 4 > 0) {
       _NOP();
-  fa:	00 00       	nop
-  fc:	eb cf       	rjmp	.-42     	; 0xd4 <main+0x54>
+  f2:	00 00       	nop
+  f4:	ed cf       	rjmp	.-38     	; 0xd0 <main+0x50>
 
-000000fe <_exit>:
-  fe:	f8 94       	cli
+000000f6 <_exit>:
+  f6:	f8 94       	cli
 
-00000100 <__stop_program>:
- 100:	ff cf       	rjmp	.-2      	; 0x100 <__stop_program>
+000000f8 <__stop_program>:
+  f8:	ff cf       	rjmp	.-2      	; 0xf8 <__stop_program>

@@ -79,15 +79,15 @@ similarly:
 
 - asynchronous mode disabled;
 - fast PWM mode (with `OCR2A` register set as the counter's top value);
-- `OCR2A` set to 15;
+- `OCR2A` set to 23;
 - `OC2A` pin configured in toggle mode (its value toggles every time the counter
   is reset);
 - `OC2B` pin free for other uses;
 - prescaler used, divider set to 8.
 
-This produces a word select signal of 62.5 kHz, with a duty cycle of 50%.  With
-this configuration, pin 11 is reserved as the output compare pin, and that's the
-reason why that pin was used for the word select.
+This produces a word select signal of about 41.6 kHz, with a duty cycle of 50%.
+With this configuration, pin 11 is reserved as the output compare pin, and
+that's the reason why that pin was used for the word select.
 
 The data signal is produced via software, by manually setting or clearing a pin.
 In theory, any pin could be used for the data signal, except 6 and 11 (since
@@ -126,21 +126,20 @@ We can use this to start both timers at the exact same time:
 
 ### Audio quality
 
-The word select signal's period lasts enough for transmitting 16 bits, 8 when
-the signal stays low, 8 when the signal stays high. This means we're producing
-an audio signal with 8 bit samples, 2 channels and a sampling rate of 62.5 kHz.
-The generated audio is loud, and attempting to generate audio signals with a
-lower volume severely limits the samples' range; also, the sampling rate is well
-beyond the usual 44.1 kHz rate (the human ear cannot tell the difference).
-Future versions will attempt to lower the sample rate and increase the samples'
-range.
+The word select signal's period lasts enough for transmitting 24 bits, 12 when
+the signal stays low, 12 when the signal stays high. This means we're producing
+an audio signal with 12 bit samples, 2 channels and a sampling rate of about
+41.6 kHz. The samples range is wide enough to generate loud sounds as well as
+quiet ones; also, the sample rate is slightly lower than the usual 44.1 kHz
+rate, and an untrained listener probably won't be able to tell the difference.
 
 ### Other details
 
 After setting up and starting the timers, the instructions which set/clear the
 data pin have to be perfectly synchronized with timer 0, because of I2S'
-requirements. This involves a lot of cycle counting and manual delays, and
-the delays' implementation could be improved in terms of readability.
+requirements. This involves a lot of cycle counting and manual delays, and a
+number of constants have been created to make the job easier (see
+`i2s_driver.hpp` for more details).
 
 Besides `boards.local.txt`, there's another file which is not directly involved
 with the compilation: `disassembler-output.txt`. This file is the disassembled
