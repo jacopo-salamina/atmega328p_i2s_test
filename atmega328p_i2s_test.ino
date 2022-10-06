@@ -16,6 +16,7 @@ int main() {
   I2SDriver<SAMPLE_WIDTH> driver;
   const uint8_t HALF_SQUARE_WAVE_SAMPLES =
     F_CPU / (driver.FRAME_PERIOD * 440L);
+  driver.start();
   // Both timer 0 and 2's counters should read 0.
   delayInCycles<driver.SAMPLE_PERIOD>();
   // Timer 2's counter should read 23 (prescaler 0).

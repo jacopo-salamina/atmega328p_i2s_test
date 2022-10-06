@@ -112,6 +112,11 @@ private:
   b6:	84 b1       	in	r24, 0x04	; 4
   b8:	88 61       	ori	r24, 0x18	; 24
   ba:	84 b9       	out	0x04, r24	; 4
+     * as the I2S protocol specifies.
+     */
+  }
+
+  void start() {
     bitClear(GTCCR, TSM);
   bc:	83 b5       	in	r24, 0x23	; 35
   be:	8f 77       	andi	r24, 0x7F	; 127
@@ -135,19 +140,13 @@ private:
 	);
   cc:	4f e9       	ldi	r20, 0x9F	; 159
   ce:	51 e1       	ldi	r21, 0x11	; 17
-
-
-const uint8_t SAMPLE_WIDTH = 12;
-
-
-int main() {
-  d0:	8e e5       	ldi	r24, 0x5E	; 94
-     * constants.
-     * Because of this, timer 2 's counter should read 23 (prescaler 4).
+      delayInCycles<driver.SAMPLE_PERIOD - driver.BIT_PERIOD - 5>();
+    }
+    /*
+     * Timer 2's counter should read 23 (prescaler 4).
+     * Also, it takes 2 cycles to go back to the start of the outer loop.
      */
-    for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
-      // Timer 2's counter should read 23 (prescaler 5).
-      bitSet(PORTB, PORTB4);
+  d0:	8e e5       	ldi	r24, 0x5E	; 94
   d2:	2c 9a       	sbi	0x05, 4	; 5
 	__asm__ volatile (
 		"1: dec %0" "\n\t"
@@ -169,23 +168,11 @@ int main() {
     if (T % 3 > 0) {
       _NOP();
   dc:	00 00       	nop
-      delayInCycles<driver.BIT_PERIOD - 2>();
-      /*
-       * Timer 2's counter should read 1 (one overflow, prescaler 5 with two
-       * overflows).
-       */
-      bitClear(PORTB, PORTB4);
   de:	2c 98       	cbi	0x05, 4	; 5
   e0:	92 2f       	mov	r25, r18
   e2:	9a 95       	dec	r25
   e4:	f1 f7       	brne	.-4      	; 0xe2 <main+0x62>
   e6:	81 50       	subi	r24, 0x01	; 1
-    /*
-     * Before entering the loop, the compiler had to initialize 4 registers with
-     * constants.
-     * Because of this, timer 2 's counter should read 23 (prescaler 4).
-     */
-    for (uint8_t i = 0; i < HALF_SQUARE_WAVE_SAMPLES; i++) {
   e8:	a1 f7       	brne	.-24     	; 0xd2 <main+0x52>
 	__asm__ volatile (
 		"1: sbiw %0,1" "\n\t"

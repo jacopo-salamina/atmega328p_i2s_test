@@ -89,7 +89,6 @@ public:
      * clock, while the latter for sending the actual data.
      */
     DDRB |= bit(DDB3) | bit(DDB4);
-    bitClear(GTCCR, TSM);
     /*
      * Based on some experiments, after stopping synchronization mode, both 
      * timers stay still for 16 CPU cycles, then their respective counters
@@ -117,5 +116,9 @@ public:
      * We got lucky: when the word select changes, the bit clock line goes low,
      * as the I2S protocol specifies.
      */
+  }
+
+  void start() {
+    bitClear(GTCCR, TSM);
   }
 };
