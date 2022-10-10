@@ -1,3 +1,5 @@
+#pragma once
+
 #include <avr/io.h>
 #include "type_traits_clone.hpp"
 
