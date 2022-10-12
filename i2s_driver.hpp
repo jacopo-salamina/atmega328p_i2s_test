@@ -118,7 +118,7 @@ public:
   static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
 
   /**
-   * Note that 'currentPortB' was default-initialized on purpose: PORTB's value
+   * Note that currentPortB was default-initialized on purpose: PORTB's value
    * is retrieved at the very end of the constructor, when the port is already
    * configured.
    */
@@ -168,13 +168,12 @@ public:
   }
 
   /**
-   * The first version of 'sendSample(sample)' featured a for-loop where each
-   * bit of 'sample' was sent to bit n. 4 of PORTB. However, the compiler
-   * couldn't optimize it very well, so I had to manually write a dedicated
-   * assembly routine which uses 'bst' and 'bld'. Since these two instructions
-   * use constants for targeting a specific bit, there was no way of using the
-   * loop variable; thus, the original loop was replaced by a recursive template
-   * function.
+   * The first version of sendSample(sample) featured a for-loop where each bit
+   * of sample was sent to bit n. 4 of PORTB. However, the compiler couldn't
+   * optimize it very well, so I had to manually write a dedicated assembly
+   * routine which uses bst and bld. Since these two instructions use constants
+   * for targeting a specific bit, there was no way of using the loop variable;
+   * thus, the original loop was replaced by a recursive template function.
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);

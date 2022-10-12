@@ -94,14 +94,14 @@ public:
   {}
 
   /*
-   * Determining the number of cycles needed by 'getNextSample()' inside
-   * 'main()' is not trivial. There are multiple sections:
-   * - an 'rjmp' instruction which is only run upon the first invocation (2
+   * Determining the number of cycles needed by getNextSample() inside main() is
+   * not trivial. There are multiple sections:
+   * - an rjmp instruction which is only run upon the first invocation (2
    *   cycles);
-   * - a 'mov' instruction which the aforementioned 'rjmp' skips on purpose,
-   *   which means 'mov' is run only on subsequent calls (1 cycle);
+   * - a mov instruction which the aforementioned rjmp skips on purpose, which
+   *   means mov is run only on subsequent calls (1 cycle);
    * - a section which is always run (13 cycles);
-   * - the section which makes sure 'elapsedTicks' doesn't exceed 'PERIOD' (7
+   * - the section which makes sure elapsedTicks doesn't exceed 'PERIOD' (7
    *   cycles);
    *   - this part includes an if-else, and during the first tests each branch
    *     took a different amount of cycles, which made it impossible to reliably
@@ -109,9 +109,9 @@ public:
    *     help from the compiler, both branches now take the same number of
    *     cycles;
    * - another section which is always run (9 cycles).
-   * This means that, when 'getNextSample()' is called the first time, it takes
-   * 31 cycles, and the other times it takes 30 cycles.
-   * TODO Get rid of 'currentAmplitude'
+   * This means that, when getNextSample() is called the first time, it takes 31
+   * cycles, and the other times it takes 30 cycles.
+   * TODO Get rid of currentAmplitude
    */
   uint8_t getNextSample() {
     uint8_t sample = currentAmplitude;

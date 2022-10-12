@@ -3,7 +3,7 @@
 /*
  * Unfortunately, the AVR toolchain doesn't provide many standard C++ headers.
  * This header file is a replacement for <type_traits>, and it only provides the
- * template helpers 'enable_if' and 'enable_if_t'.
+ * template helpers enable_if and enable_if_t.
  * 
  * Implementation copied-n-pasted from
  * https://en.cppreference.com/w/cpp/types/enable_if

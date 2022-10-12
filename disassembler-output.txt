@@ -44,7 +44,7 @@ Disassembly of section .text:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 00000080 <main>:
-   * Note that 'currentPortB' was default-initialized on purpose: PORTB's value
+   * Note that currentPortB was default-initialized on purpose: PORTB's value
    * is retrieved at the very end of the constructor, when the port is already
    * configured.
    */
@@ -161,8 +161,8 @@ private:
   uint8_t getNextSample() {
     uint8_t sample = currentAmplitude;
     elapsedTicks += ticksIncrement;
-    if (elapsedTicks >= PERIOD) {
-      elapsedTicks -= PERIOD;
+    if (elapsedTicks >= PERIOD_IN_TICKS) {
+      elapsedTicks -= PERIOD_IN_TICKS;
   de:	50 59       	subi	r21, 0x90	; 144
   e0:	61 4f       	sbci	r22, 0xF1	; 241
   e2:	71 09       	sbc	r23, r1
@@ -171,7 +171,7 @@ private:
     } else {
       delayInCycles<1>();
     }
-    currentAmplitude = elapsedTicks >= PERIOD / 2 ? amplitude : 0;
+    currentAmplitude = elapsedTicks >= PERIOD_IN_TICKS / 2 ? amplitude : 0;
   e6:	e0 e1       	ldi	r30, 0x10	; 16
   e8:	41 15       	cp	r20, r1
   ea:	32 e1       	ldi	r19, 0x12	; 18
@@ -343,7 +343,7 @@ private:
     if (T % 3 > 0) {
       _NOP();
  168:	00 00       	nop
-   * function.
+   * thus, the original loop was replaced by a recursive template function.
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
@@ -518,7 +518,7 @@ private:
     if (T % 3 > 0) {
       _NOP();
  1e6:	00 00       	nop
-   * function.
+   * thus, the original loop was replaced by a recursive template function.
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
@@ -532,8 +532,8 @@ private:
  1f0:	f1 f7       	brne	.-4      	; 0x1ee <main+0x16e>
  1f2:	00 00       	nop
  1f4:	9e 2f       	mov	r25, r30
-   * 31 cycles, and the other times it takes 30 cycles.
-   * TODO Get rid of 'currentAmplitude'
+   * cycles, and the other times it takes 30 cycles.
+   * TODO Get rid of currentAmplitude
    */
   uint8_t getNextSample() {
     uint8_t sample = currentAmplitude;
@@ -545,7 +545,7 @@ private:
  1fe:	32 e0       	ldi	r19, 0x02	; 2
  200:	e3 1e       	adc	r14, r19
  202:	f1 1c       	adc	r15, r1
-    if (elapsedTicks >= PERIOD) {
+    if (elapsedTicks >= PERIOD_IN_TICKS) {
  204:	c1 14       	cp	r12, r1
  206:	34 e2       	ldi	r19, 0x24	; 36
  208:	d3 06       	cpc	r13, r19
