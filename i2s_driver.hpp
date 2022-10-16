@@ -97,7 +97,7 @@ private:
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
     if (BITS > 0) {
-      delayInCycles<BIT_PERIOD - 3>();
+      delayInCyclesWithLoop<BIT_PERIOD - 3>();
       sendBitsInAssembly<(BITS - 1) & 0x07>(sample);
     }
   }
@@ -177,7 +177,7 @@ public:
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
-    delayInCycles<BIT_PERIOD - 2>();
+    delayInCyclesWithLoop<BIT_PERIOD - 2>();
     bitClear(currentPortB, PORTB4);
     PORTB = currentPortB;
   }

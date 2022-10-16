@@ -148,7 +148,7 @@ inline void delayInCyclesWithNOP() {
   cc:	40 e0       	ldi	r20, 0x00	; 0
   ce:	50 e0       	ldi	r21, 0x00	; 0
   d0:	ba 01       	movw	r22, r20
-  delayInCycles<driver.BIT_PERIOD * 5 + 8 - 12>();
+  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 12>();
   /*
    * Timer 2's counter should read 8 (prescaler 4). Also sample is initialized
    * slightly later.
@@ -337,7 +337,7 @@ inline void delayInCyclesWithNOP() {
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
-    delayInCycles<BIT_PERIOD - 2>();
+    delayInCyclesWithLoop<BIT_PERIOD - 2>();
     bitClear(currentPortB, PORTB4);
  16a:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;
@@ -503,7 +503,7 @@ inline void delayInCyclesWithNOP() {
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
-    delayInCycles<BIT_PERIOD - 2>();
+    delayInCyclesWithLoop<BIT_PERIOD - 2>();
     bitClear(currentPortB, PORTB4);
  1e8:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;

@@ -176,7 +176,7 @@ inline void delayInCyclesWithNOP() {
  * has just been zeroed, making the delay one CPU cycle shorter.
  */
 template<uint16_t T>
-inline void delayInCycles() {
+inline void delayInCyclesWithLoop() {
   if (T < 3) {
     delayInCyclesWithNOP<T>();
   } else if (T < 3 * 256) {
