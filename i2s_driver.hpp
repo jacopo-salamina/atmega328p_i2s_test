@@ -84,7 +84,7 @@ private:
   static inline void copyBitInAssembly(
     uint8_t& destinationByte, const uint8_t sourceByte
   ) {
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)

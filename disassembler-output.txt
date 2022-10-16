@@ -178,7 +178,7 @@ inline void delayInCyclesWithNOP() {
   f0:	71 05       	cpc	r23, r1
   f2:	08 f0       	brcs	.+2      	; 0xf6 <main+0x76>
   f4:	9e 2f       	mov	r25, r30
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -197,7 +197,7 @@ inline void delayInCyclesWithNOP() {
   fe:	3a 95       	dec	r19
  100:	f1 f7       	brne	.-4      	; 0xfe <main+0x7e>
  102:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -216,7 +216,7 @@ inline void delayInCyclesWithNOP() {
  10c:	3a 95       	dec	r19
  10e:	f1 f7       	brne	.-4      	; 0x10c <main+0x8c>
  110:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -235,7 +235,7 @@ inline void delayInCyclesWithNOP() {
  11a:	3a 95       	dec	r19
  11c:	f1 f7       	brne	.-4      	; 0x11a <main+0x9a>
  11e:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -254,7 +254,7 @@ inline void delayInCyclesWithNOP() {
  128:	3a 95       	dec	r19
  12a:	f1 f7       	brne	.-4      	; 0x128 <main+0xa8>
  12c:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -273,7 +273,7 @@ inline void delayInCyclesWithNOP() {
  136:	3a 95       	dec	r19
  138:	f1 f7       	brne	.-4      	; 0x136 <main+0xb6>
  13a:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -292,7 +292,7 @@ inline void delayInCyclesWithNOP() {
  144:	3a 95       	dec	r19
  146:	f1 f7       	brne	.-4      	; 0x144 <main+0xc4>
  148:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -311,7 +311,7 @@ inline void delayInCyclesWithNOP() {
  152:	3a 95       	dec	r19
  154:	f1 f7       	brne	.-4      	; 0x152 <main+0xd2>
  156:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -344,7 +344,7 @@ inline void delayInCyclesWithNOP() {
  16e:	3a 95       	dec	r19
  170:	f1 f7       	brne	.-4      	; 0x16e <main+0xee>
  172:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -363,7 +363,7 @@ inline void delayInCyclesWithNOP() {
  17c:	3a 95       	dec	r19
  17e:	f1 f7       	brne	.-4      	; 0x17c <main+0xfc>
  180:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -382,7 +382,7 @@ inline void delayInCyclesWithNOP() {
  18a:	3a 95       	dec	r19
  18c:	f1 f7       	brne	.-4      	; 0x18a <main+0x10a>
  18e:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -401,7 +401,7 @@ inline void delayInCyclesWithNOP() {
  198:	3a 95       	dec	r19
  19a:	f1 f7       	brne	.-4      	; 0x198 <main+0x118>
  19c:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -420,7 +420,7 @@ inline void delayInCyclesWithNOP() {
  1a6:	3a 95       	dec	r19
  1a8:	f1 f7       	brne	.-4      	; 0x1a6 <main+0x126>
  1aa:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -439,7 +439,7 @@ inline void delayInCyclesWithNOP() {
  1b4:	3a 95       	dec	r19
  1b6:	f1 f7       	brne	.-4      	; 0x1b4 <main+0x134>
  1b8:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -458,7 +458,7 @@ inline void delayInCyclesWithNOP() {
  1c2:	3a 95       	dec	r19
  1c4:	f1 f7       	brne	.-4      	; 0x1c2 <main+0x142>
  1c6:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
@@ -477,7 +477,7 @@ inline void delayInCyclesWithNOP() {
  1d0:	3a 95       	dec	r19
  1d2:	f1 f7       	brne	.-4      	; 0x1d0 <main+0x150>
  1d4:	00 00       	nop
-    asm volatile (
+    asm (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)

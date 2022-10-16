@@ -108,7 +108,7 @@ private:
     );
     uint8_t tmp;
     uint8_t nextSample;
-    asm volatile (
+    asm (
       "eor %0, %0" "\n\t"
       "cp %A2, __zero_reg__" "\n\t"
       "ldi %1, 0x12" "\n\t"
