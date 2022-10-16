@@ -26,7 +26,7 @@ int main() {
   SquareWaveGenerator generator(driver, 16, 440);
   driver.start();
   // Both timer 0 and 2's counters should read 0.
-  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 12>();
+  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 13>();
   /*
    * Timer 2's counter should read 8 (prescaler 4). Also sample is initialized
    * slightly later.
@@ -36,6 +36,7 @@ int main() {
    * Right before starting the infinite loop, the compiler initializes:
    * - generator.elapsedTicks, (3 cycles);
    * - sample (1 cycle);
+   * - generator.amplitude (1 cycle);
    * - three constants for delayInCycles() (3 cycles).
    * After that, the CPU uses rjmp to skip a part of generator.getNextSample()
    * (2 cycles).
@@ -58,9 +59,9 @@ int main() {
      * By the time driver.sendSample(sample) completes, timer 2's counter should
      * read 2 (overflowed once, prescaler 0).
      * The additional delay needed for the processor to jump back at the start
-     * of the loop is already integrated in generator.getNextLoop().
+     * of the loop is already integrated in generator.getNextSample().
      */
-    delayInCyclesWithLoop<driver.BIT_PERIOD * 4 - 27>();
+    delayInCyclesWithLoop<driver.BIT_PERIOD * 4 - 26>();
     sample = generator.getNextSample();
   }
   return 0;

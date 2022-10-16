@@ -132,43 +132,43 @@ private:
   c4:	99 e1       	ldi	r25, 0x19	; 25
   c6:	9a 95       	dec	r25
   c8:	f1 f7       	brne	.-4      	; 0xc6 <main+0x46>
-inline void delayInCyclesWithNOP() {
-  if (T) {
-    delayInCyclesWithNOP<T / 2>();
-    delayInCyclesWithNOP<T / 2>();
-    if (T % 2) {
-      _NOP();
-  ca:	00 00       	nop
     uint32_t frequency
   ) :
     amplitude(amplitude),
     ticksIncrement(driver.FRAME_PERIOD * frequency),
     currentAmplitude(0),
     elapsedTicks(0)
-  cc:	40 e0       	ldi	r20, 0x00	; 0
-  ce:	50 e0       	ldi	r21, 0x00	; 0
-  d0:	ba 01       	movw	r22, r20
-  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 12>();
+  ca:	40 e0       	ldi	r20, 0x00	; 0
+  cc:	50 e0       	ldi	r21, 0x00	; 0
+  ce:	ba 01       	movw	r22, r20
+  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 13>();
   /*
    * Timer 2's counter should read 8 (prescaler 4). Also sample is initialized
    * slightly later.
    */
   uint8_t sample = generator.getFirstSample();
-  d2:	90 e0       	ldi	r25, 0x00	; 0
-  d4:	24 e0       	ldi	r18, 0x04	; 4
-  d6:	f4 e1       	ldi	r31, 0x14	; 20
-  d8:	ec e0       	ldi	r30, 0x0C	; 12
-  da:	0e c0       	rjmp	.+28     	; 0xf8 <main+0x78>
+  d0:	90 e0       	ldi	r25, 0x00	; 0
+  d2:	24 e0       	ldi	r18, 0x04	; 4
+  d4:	a4 e1       	ldi	r26, 0x14	; 20
+  d6:	fc e0       	ldi	r31, 0x0C	; 12
+      "cpc %D2, __zero_reg__" "\n\t"
+      "brcs .+2" "\n\t"
+      "mov %0, %3" "\n\t"
+      : "=&r" (nextSample), "=&d" (tmp)
+      : "r" (elapsedTicks), "r" (amplitude)
+    );
+  d8:	e0 e1       	ldi	r30, 0x10	; 16
+  da:	0d c0       	rjmp	.+26     	; 0xf6 <main+0x76>
+inline void delayInCyclesWithNOP() {
+  if (T) {
+    delayInCyclesWithNOP<T / 2>();
+    delayInCyclesWithNOP<T / 2>();
+    if (T % 2) {
+      _NOP();
   dc:	00 00       	nop
   de:	00 00       	nop
   e0:	b7 01       	movw	r22, r14
   e2:	a6 01       	movw	r20, r12
-      "cpc %D2, __zero_reg__" "\n\t"
-      "brcs .+2" "\n\t"
-      "dec %0" "\n\t"
-      : "=&r" (nextSample), "=&d" (tmp)
-      : "r" (elapsedTicks)
-    );
   e4:	99 27       	eor	r25, r25
   e6:	41 15       	cp	r20, r1
   e8:	32 e1       	ldi	r19, 0x12	; 18
@@ -177,340 +177,339 @@ inline void delayInCyclesWithNOP() {
   ee:	63 07       	cpc	r22, r19
   f0:	71 05       	cpc	r23, r1
   f2:	08 f0       	brcs	.+2      	; 0xf6 <main+0x76>
-  f4:	9a 95       	dec	r25
-    return nextSample & amplitude;
-  f6:	90 71       	andi	r25, 0x10	; 16
+  f4:	9e 2f       	mov	r25, r30
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
-  f8:	97 fb       	bst	r25, 7
-  fa:	84 f9       	bld	r24, 4
+  f6:	97 fb       	bst	r25, 7
+  f8:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
-  fc:	85 b9       	out	0x05, r24	; 5
-  fe:	32 2f       	mov	r19, r18
- 100:	3a 95       	dec	r19
- 102:	f1 f7       	brne	.-4      	; 0x100 <main+0x80>
- 104:	00 00       	nop
+  fa:	85 b9       	out	0x05, r24	; 5
+  fc:	32 2f       	mov	r19, r18
+  fe:	3a 95       	dec	r19
+ 100:	f1 f7       	brne	.-4      	; 0xfe <main+0x7e>
+ 102:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 106:	96 fb       	bst	r25, 6
- 108:	84 f9       	bld	r24, 4
+ 104:	96 fb       	bst	r25, 6
+ 106:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 10a:	85 b9       	out	0x05, r24	; 5
- 10c:	32 2f       	mov	r19, r18
- 10e:	3a 95       	dec	r19
- 110:	f1 f7       	brne	.-4      	; 0x10e <main+0x8e>
- 112:	00 00       	nop
+ 108:	85 b9       	out	0x05, r24	; 5
+ 10a:	32 2f       	mov	r19, r18
+ 10c:	3a 95       	dec	r19
+ 10e:	f1 f7       	brne	.-4      	; 0x10c <main+0x8c>
+ 110:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 114:	95 fb       	bst	r25, 5
- 116:	84 f9       	bld	r24, 4
+ 112:	95 fb       	bst	r25, 5
+ 114:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 118:	85 b9       	out	0x05, r24	; 5
- 11a:	32 2f       	mov	r19, r18
- 11c:	3a 95       	dec	r19
- 11e:	f1 f7       	brne	.-4      	; 0x11c <main+0x9c>
- 120:	00 00       	nop
+ 116:	85 b9       	out	0x05, r24	; 5
+ 118:	32 2f       	mov	r19, r18
+ 11a:	3a 95       	dec	r19
+ 11c:	f1 f7       	brne	.-4      	; 0x11a <main+0x9a>
+ 11e:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 122:	94 fb       	bst	r25, 4
- 124:	84 f9       	bld	r24, 4
+ 120:	94 fb       	bst	r25, 4
+ 122:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 126:	85 b9       	out	0x05, r24	; 5
- 128:	32 2f       	mov	r19, r18
- 12a:	3a 95       	dec	r19
- 12c:	f1 f7       	brne	.-4      	; 0x12a <main+0xaa>
- 12e:	00 00       	nop
+ 124:	85 b9       	out	0x05, r24	; 5
+ 126:	32 2f       	mov	r19, r18
+ 128:	3a 95       	dec	r19
+ 12a:	f1 f7       	brne	.-4      	; 0x128 <main+0xa8>
+ 12c:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 130:	93 fb       	bst	r25, 3
- 132:	84 f9       	bld	r24, 4
+ 12e:	93 fb       	bst	r25, 3
+ 130:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 134:	85 b9       	out	0x05, r24	; 5
- 136:	32 2f       	mov	r19, r18
- 138:	3a 95       	dec	r19
- 13a:	f1 f7       	brne	.-4      	; 0x138 <main+0xb8>
- 13c:	00 00       	nop
+ 132:	85 b9       	out	0x05, r24	; 5
+ 134:	32 2f       	mov	r19, r18
+ 136:	3a 95       	dec	r19
+ 138:	f1 f7       	brne	.-4      	; 0x136 <main+0xb6>
+ 13a:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 13e:	92 fb       	bst	r25, 2
- 140:	84 f9       	bld	r24, 4
+ 13c:	92 fb       	bst	r25, 2
+ 13e:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 142:	85 b9       	out	0x05, r24	; 5
- 144:	32 2f       	mov	r19, r18
- 146:	3a 95       	dec	r19
- 148:	f1 f7       	brne	.-4      	; 0x146 <main+0xc6>
- 14a:	00 00       	nop
+ 140:	85 b9       	out	0x05, r24	; 5
+ 142:	32 2f       	mov	r19, r18
+ 144:	3a 95       	dec	r19
+ 146:	f1 f7       	brne	.-4      	; 0x144 <main+0xc4>
+ 148:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 14c:	91 fb       	bst	r25, 1
- 14e:	84 f9       	bld	r24, 4
+ 14a:	91 fb       	bst	r25, 1
+ 14c:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 150:	85 b9       	out	0x05, r24	; 5
- 152:	32 2f       	mov	r19, r18
- 154:	3a 95       	dec	r19
- 156:	f1 f7       	brne	.-4      	; 0x154 <main+0xd4>
- 158:	00 00       	nop
+ 14e:	85 b9       	out	0x05, r24	; 5
+ 150:	32 2f       	mov	r19, r18
+ 152:	3a 95       	dec	r19
+ 154:	f1 f7       	brne	.-4      	; 0x152 <main+0xd2>
+ 156:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 15a:	90 fb       	bst	r25, 0
- 15c:	84 f9       	bld	r24, 4
+ 158:	90 fb       	bst	r25, 0
+ 15a:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 15e:	85 b9       	out	0x05, r24	; 5
- 160:	32 2f       	mov	r19, r18
- 162:	3a 95       	dec	r19
- 164:	f1 f7       	brne	.-4      	; 0x162 <main+0xe2>
+ 15c:	85 b9       	out	0x05, r24	; 5
+ 15e:	32 2f       	mov	r19, r18
+ 160:	3a 95       	dec	r19
+ 162:	f1 f7       	brne	.-4      	; 0x160 <main+0xe0>
+ 164:	00 00       	nop
  166:	00 00       	nop
- 168:	00 00       	nop
    * thus, the original loop was replaced by a recursive template function.
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
     delayInCyclesWithLoop<BIT_PERIOD - 2>();
     bitClear(currentPortB, PORTB4);
- 16a:	8f 7e       	andi	r24, 0xEF	; 239
+ 168:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;
- 16c:	85 b9       	out	0x05, r24	; 5
- 16e:	3f 2f       	mov	r19, r31
- 170:	3a 95       	dec	r19
- 172:	f1 f7       	brne	.-4      	; 0x170 <main+0xf0>
- 174:	00 00       	nop
+ 16a:	85 b9       	out	0x05, r24	; 5
+ 16c:	3a 2f       	mov	r19, r26
+ 16e:	3a 95       	dec	r19
+ 170:	f1 f7       	brne	.-4      	; 0x16e <main+0xee>
+ 172:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 176:	97 fb       	bst	r25, 7
- 178:	84 f9       	bld	r24, 4
+ 174:	97 fb       	bst	r25, 7
+ 176:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 17a:	85 b9       	out	0x05, r24	; 5
- 17c:	32 2f       	mov	r19, r18
- 17e:	3a 95       	dec	r19
- 180:	f1 f7       	brne	.-4      	; 0x17e <main+0xfe>
- 182:	00 00       	nop
+ 178:	85 b9       	out	0x05, r24	; 5
+ 17a:	32 2f       	mov	r19, r18
+ 17c:	3a 95       	dec	r19
+ 17e:	f1 f7       	brne	.-4      	; 0x17c <main+0xfc>
+ 180:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 184:	96 fb       	bst	r25, 6
- 186:	84 f9       	bld	r24, 4
+ 182:	96 fb       	bst	r25, 6
+ 184:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 188:	85 b9       	out	0x05, r24	; 5
- 18a:	32 2f       	mov	r19, r18
- 18c:	3a 95       	dec	r19
- 18e:	f1 f7       	brne	.-4      	; 0x18c <main+0x10c>
- 190:	00 00       	nop
+ 186:	85 b9       	out	0x05, r24	; 5
+ 188:	32 2f       	mov	r19, r18
+ 18a:	3a 95       	dec	r19
+ 18c:	f1 f7       	brne	.-4      	; 0x18a <main+0x10a>
+ 18e:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 192:	95 fb       	bst	r25, 5
- 194:	84 f9       	bld	r24, 4
+ 190:	95 fb       	bst	r25, 5
+ 192:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 196:	85 b9       	out	0x05, r24	; 5
- 198:	32 2f       	mov	r19, r18
- 19a:	3a 95       	dec	r19
- 19c:	f1 f7       	brne	.-4      	; 0x19a <main+0x11a>
- 19e:	00 00       	nop
+ 194:	85 b9       	out	0x05, r24	; 5
+ 196:	32 2f       	mov	r19, r18
+ 198:	3a 95       	dec	r19
+ 19a:	f1 f7       	brne	.-4      	; 0x198 <main+0x118>
+ 19c:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 1a0:	94 fb       	bst	r25, 4
- 1a2:	84 f9       	bld	r24, 4
+ 19e:	94 fb       	bst	r25, 4
+ 1a0:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 1a4:	85 b9       	out	0x05, r24	; 5
- 1a6:	32 2f       	mov	r19, r18
- 1a8:	3a 95       	dec	r19
- 1aa:	f1 f7       	brne	.-4      	; 0x1a8 <main+0x128>
- 1ac:	00 00       	nop
+ 1a2:	85 b9       	out	0x05, r24	; 5
+ 1a4:	32 2f       	mov	r19, r18
+ 1a6:	3a 95       	dec	r19
+ 1a8:	f1 f7       	brne	.-4      	; 0x1a6 <main+0x126>
+ 1aa:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 1ae:	93 fb       	bst	r25, 3
- 1b0:	84 f9       	bld	r24, 4
+ 1ac:	93 fb       	bst	r25, 3
+ 1ae:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 1b2:	85 b9       	out	0x05, r24	; 5
- 1b4:	32 2f       	mov	r19, r18
- 1b6:	3a 95       	dec	r19
- 1b8:	f1 f7       	brne	.-4      	; 0x1b6 <main+0x136>
- 1ba:	00 00       	nop
+ 1b0:	85 b9       	out	0x05, r24	; 5
+ 1b2:	32 2f       	mov	r19, r18
+ 1b4:	3a 95       	dec	r19
+ 1b6:	f1 f7       	brne	.-4      	; 0x1b4 <main+0x134>
+ 1b8:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 1bc:	92 fb       	bst	r25, 2
- 1be:	84 f9       	bld	r24, 4
+ 1ba:	92 fb       	bst	r25, 2
+ 1bc:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 1c0:	85 b9       	out	0x05, r24	; 5
- 1c2:	32 2f       	mov	r19, r18
- 1c4:	3a 95       	dec	r19
- 1c6:	f1 f7       	brne	.-4      	; 0x1c4 <main+0x144>
- 1c8:	00 00       	nop
+ 1be:	85 b9       	out	0x05, r24	; 5
+ 1c0:	32 2f       	mov	r19, r18
+ 1c2:	3a 95       	dec	r19
+ 1c4:	f1 f7       	brne	.-4      	; 0x1c2 <main+0x142>
+ 1c6:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 1ca:	91 fb       	bst	r25, 1
- 1cc:	84 f9       	bld	r24, 4
+ 1c8:	91 fb       	bst	r25, 1
+ 1ca:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 1ce:	85 b9       	out	0x05, r24	; 5
- 1d0:	32 2f       	mov	r19, r18
- 1d2:	3a 95       	dec	r19
- 1d4:	f1 f7       	brne	.-4      	; 0x1d2 <main+0x152>
- 1d6:	00 00       	nop
+ 1cc:	85 b9       	out	0x05, r24	; 5
+ 1ce:	32 2f       	mov	r19, r18
+ 1d0:	3a 95       	dec	r19
+ 1d2:	f1 f7       	brne	.-4      	; 0x1d0 <main+0x150>
+ 1d4:	00 00       	nop
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
       : "+r" (destinationByte)
       : "r" (sourceByte), "I" (DESTINATION_BIT), "I" (SOURCE_BIT)
     );
- 1d8:	90 fb       	bst	r25, 0
- 1da:	84 f9       	bld	r24, 4
+ 1d6:	90 fb       	bst	r25, 0
+ 1d8:	84 f9       	bld	r24, 4
   }
   
   template<uint8_t BITS = 7>
   inline void sendBitsInAssembly(const uint8_t sample) {
     copyBitInAssembly<PORTB4, BITS>(currentPortB, sample);
     PORTB = currentPortB;
- 1dc:	85 b9       	out	0x05, r24	; 5
- 1de:	92 2f       	mov	r25, r18
- 1e0:	9a 95       	dec	r25
- 1e2:	f1 f7       	brne	.-4      	; 0x1e0 <main+0x160>
+ 1da:	85 b9       	out	0x05, r24	; 5
+ 1dc:	92 2f       	mov	r25, r18
+ 1de:	9a 95       	dec	r25
+ 1e0:	f1 f7       	brne	.-4      	; 0x1de <main+0x15e>
+ 1e2:	00 00       	nop
  1e4:	00 00       	nop
- 1e6:	00 00       	nop
    * thus, the original loop was replaced by a recursive template function.
    */
   void sendSample(const uint8_t sample) {
     sendBitsInAssembly(sample);
     delayInCyclesWithLoop<BIT_PERIOD - 2>();
     bitClear(currentPortB, PORTB4);
- 1e8:	8f 7e       	andi	r24, 0xEF	; 239
+ 1e6:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;
- 1ea:	85 b9       	out	0x05, r24	; 5
- 1ec:	9e 2f       	mov	r25, r30
- 1ee:	9a 95       	dec	r25
- 1f0:	f1 f7       	brne	.-4      	; 0x1ee <main+0x16e>
+ 1e8:	85 b9       	out	0x05, r24	; 5
+ 1ea:	9f 2f       	mov	r25, r31
+ 1ec:	9a 95       	dec	r25
+ 1ee:	f1 f7       	brne	.-4      	; 0x1ec <main+0x16c>
+ 1f0:	00 00       	nop
  1f2:	00 00       	nop
    * branch and jump at the start of the loop, without the need for an
    * additional rjmp.

@@ -87,9 +87,9 @@ private:
    * but computes it in a constant amount of CPU cycles.
    * 
    * The assembly code sets a register to 0, performs the comparison and then
-   * conditionally sets the same register to 0xff. The last two instructions are
-   * the key to compute the result in a constant time: brcs only skips one
-   * instruction, dec (which completes in one cycle), so skipping it or
+   * conditionally copies amplitude to that register. The last two instructions
+   * are the key to compute the result in a constant time: brcs only skips one
+   * instruction, mov (which completes in one cycle), so skipping it or
    * executing it always takes the same amount of time. The compiler, on the
    * other hand, was less predictable.
    * 
@@ -98,10 +98,8 @@ private:
    * should be possible to shape the assembly code at compile time, based on the
    * actual value of PERIOD_IN_TICKS / 2. However, working on this wouldn't be
    * really worth it, as I'm only planning to work on an Arduino UNO board, so
-   * the CPU frequency is always the same.
-   * 
-   * TODO Avoid the last bitwise AND and use the last assembly instruction to
-   *  copy amplitude into nextSample (this should save one instruction)
+   * the CPU frequency is always the same. Just to make sure, I added a static
+   * assertion against PERIOD_IN_TICKS / 2.
    */
   uint8_t compareAndReturnNextSampleInAssembly() {
     static_assert(
@@ -119,11 +117,11 @@ private:
       "cpc %C2, %1" "\n\t"
       "cpc %D2, __zero_reg__" "\n\t"
       "brcs .+2" "\n\t"
-      "dec %0" "\n\t"
+      "mov %0, %3" "\n\t"
       : "=&r" (nextSample), "=&d" (tmp)
-      : "r" (elapsedTicks)
+      : "r" (elapsedTicks), "r" (amplitude)
     );
-    return nextSample & amplitude;
+    return nextSample;
   }
 public:
   template<auto... Args>
@@ -154,8 +152,8 @@ public:
    *     compiler, both branches now take the same number of cycles;
    *   - part of these instructions also conveniently jump right before the
    *     start of the main infinite loop;
-   * - compareAndReturnNextSampleInAssembly() which is always run (10 cycles);
-   * The entire method takes 24 cycles.
+   * - compareAndReturnNextSampleInAssembly() which is always run (9 cycles);
+   * The entire method takes 23 cycles.
    * 
    * The section which makes sure elapsedTicks doesn't exceed PERIOD_IN_TICKS
    * deserves an in-depth discussion on some technical aspects.
