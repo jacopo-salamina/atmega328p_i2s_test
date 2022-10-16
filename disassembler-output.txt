@@ -38,7 +38,7 @@ Disassembly of section .text:
   70:	de bf       	out	0x3e, r29	; 62
   72:	cd bf       	out	0x3d, r28	; 61
   74:	0e 94 40 00 	call	0x80	; 0x80 <main>
-  78:	0c 94 0e 01 	jmp	0x21c	; 0x21c <_exit>
+  78:	0c 94 07 01 	jmp	0x20e	; 0x20e <_exit>
 
 0000007c <__bad_interrupt>:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
@@ -129,7 +129,7 @@ private:
 		: "=r" (__count)
 		: "0" (__count)
 	);
-  c4:	9f e0       	ldi	r25, 0x0F	; 15
+  c4:	99 e1       	ldi	r25, 0x19	; 25
   c6:	9a 95       	dec	r25
   c8:	f1 f7       	brne	.-4      	; 0xc6 <main+0x46>
 inline void delayInCyclesWithNOP() {
@@ -139,45 +139,47 @@ inline void delayInCyclesWithNOP() {
     if (T % 2) {
       _NOP();
   ca:	00 00       	nop
-  cc:	00 00       	nop
     uint32_t frequency
   ) :
     amplitude(amplitude),
     ticksIncrement(driver.FRAME_PERIOD * frequency),
     currentAmplitude(0),
     elapsedTicks(0)
-  ce:	40 e0       	ldi	r20, 0x00	; 0
-  d0:	50 e0       	ldi	r21, 0x00	; 0
-  d2:	ba 01       	movw	r22, r20
-  d4:	90 e0       	ldi	r25, 0x00	; 0
-  d6:	24 e0       	ldi	r18, 0x04	; 4
-  d8:	a4 e1       	ldi	r26, 0x14	; 20
-  da:	fa e0       	ldi	r31, 0x0A	; 10
-  dc:	8c c0       	rjmp	.+280    	; 0x1f6 <main+0x176>
+  cc:	40 e0       	ldi	r20, 0x00	; 0
+  ce:	50 e0       	ldi	r21, 0x00	; 0
+  d0:	ba 01       	movw	r22, r20
+  delayInCycles<driver.BIT_PERIOD * 5 + 8 - 12>();
+  /*
+   * Timer 2's counter should read 8 (prescaler 4). Also sample is initialized
+   * slightly later.
    */
-  uint8_t getNextSample() {
-    uint8_t sample = currentAmplitude;
-    elapsedTicks += ticksIncrement;
-    if (elapsedTicks >= PERIOD_IN_TICKS) {
-      elapsedTicks -= PERIOD_IN_TICKS;
-  de:	50 59       	subi	r21, 0x90	; 144
-  e0:	61 4f       	sbci	r22, 0xF1	; 241
-  e2:	71 09       	sbc	r23, r1
-  e4:	00 00       	nop
-      delayInCycles<1>();
-    } else {
-      delayInCycles<1>();
-    }
-    currentAmplitude = elapsedTicks >= PERIOD_IN_TICKS / 2 ? amplitude : 0;
-  e6:	e0 e1       	ldi	r30, 0x10	; 16
-  e8:	41 15       	cp	r20, r1
-  ea:	32 e1       	ldi	r19, 0x12	; 18
-  ec:	53 07       	cpc	r21, r19
-  ee:	3a e7       	ldi	r19, 0x7A	; 122
-  f0:	63 07       	cpc	r22, r19
-  f2:	71 05       	cpc	r23, r1
-  f4:	08 f4       	brcc	.+2      	; 0xf8 <main+0x78>
-  f6:	e0 e0       	ldi	r30, 0x00	; 0
+  uint8_t sample = generator.getFirstSample();
+  d2:	90 e0       	ldi	r25, 0x00	; 0
+  d4:	24 e0       	ldi	r18, 0x04	; 4
+  d6:	f4 e1       	ldi	r31, 0x14	; 20
+  d8:	ec e0       	ldi	r30, 0x0C	; 12
+  da:	0e c0       	rjmp	.+28     	; 0xf8 <main+0x78>
+  dc:	00 00       	nop
+  de:	00 00       	nop
+  e0:	b7 01       	movw	r22, r14
+  e2:	a6 01       	movw	r20, r12
+      "cpc %D2, __zero_reg__" "\n\t"
+      "brcs .+2" "\n\t"
+      "dec %0" "\n\t"
+      : "=&r" (nextSample), "=&d" (tmp)
+      : "r" (elapsedTicks)
+    );
+  e4:	99 27       	eor	r25, r25
+  e6:	41 15       	cp	r20, r1
+  e8:	32 e1       	ldi	r19, 0x12	; 18
+  ea:	53 07       	cpc	r21, r19
+  ec:	3a e7       	ldi	r19, 0x7A	; 122
+  ee:	63 07       	cpc	r22, r19
+  f0:	71 05       	cpc	r23, r1
+  f2:	08 f0       	brcs	.+2      	; 0xf6 <main+0x76>
+  f4:	9a 95       	dec	r25
+    return nextSample & amplitude;
+  f6:	90 71       	andi	r25, 0x10	; 16
     asm volatile (
       "bst %1, %3" "\n\t"
       "bld %0, %2" "\n\t"
@@ -340,7 +342,7 @@ inline void delayInCyclesWithNOP() {
  16a:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;
  16c:	85 b9       	out	0x05, r24	; 5
- 16e:	3a 2f       	mov	r19, r26
+ 16e:	3f 2f       	mov	r19, r31
  170:	3a 95       	dec	r19
  172:	f1 f7       	brne	.-4      	; 0x170 <main+0xf0>
  174:	00 00       	nop
@@ -506,40 +508,39 @@ inline void delayInCyclesWithNOP() {
  1e8:	8f 7e       	andi	r24, 0xEF	; 239
     PORTB = currentPortB;
  1ea:	85 b9       	out	0x05, r24	; 5
- 1ec:	9f 2f       	mov	r25, r31
+ 1ec:	9e 2f       	mov	r25, r30
  1ee:	9a 95       	dec	r25
  1f0:	f1 f7       	brne	.-4      	; 0x1ee <main+0x16e>
  1f2:	00 00       	nop
- 1f4:	9e 2f       	mov	r25, r30
-   * cycles, and the other times it takes 30 cycles.
-   * TODO Get rid of currentAmplitude
+   * branch and jump at the start of the loop, without the need for an
+   * additional rjmp.
    */
   uint8_t getNextSample() {
-    uint8_t sample = currentAmplitude;
     elapsedTicks += ticksIncrement;
- 1f6:	6a 01       	movw	r12, r20
- 1f8:	7b 01       	movw	r14, r22
- 1fa:	34 e9       	ldi	r19, 0x94	; 148
- 1fc:	d3 0e       	add	r13, r19
- 1fe:	32 e0       	ldi	r19, 0x02	; 2
- 200:	e3 1e       	adc	r14, r19
- 202:	f1 1c       	adc	r15, r1
-    if (elapsedTicks >= PERIOD_IN_TICKS) {
- 204:	c1 14       	cp	r12, r1
- 206:	34 e2       	ldi	r19, 0x24	; 36
- 208:	d3 06       	cpc	r13, r19
- 20a:	34 ef       	ldi	r19, 0xF4	; 244
- 20c:	e3 06       	cpc	r14, r19
- 20e:	f1 04       	cpc	r15, r1
- 210:	08 f0       	brcs	.+2      	; 0x214 <main+0x194>
- 212:	65 cf       	rjmp	.-310    	; 0xde <main+0x5e>
- 214:	00 00       	nop
- 216:	b7 01       	movw	r22, r14
- 218:	a6 01       	movw	r20, r12
- 21a:	65 cf       	rjmp	.-310    	; 0xe6 <main+0x66>
+    int32_t tmp = elapsedTicks - PERIOD_IN_TICKS;
+ 1f4:	6a 01       	movw	r12, r20
+ 1f6:	7b 01       	movw	r14, r22
+ 1f8:	90 e9       	ldi	r25, 0x90	; 144
+ 1fa:	d9 1a       	sub	r13, r25
+ 1fc:	91 ef       	ldi	r25, 0xF1	; 241
+ 1fe:	e9 0a       	sbc	r14, r25
+ 200:	f1 08       	sbc	r15, r1
+    if (tmp >= 0) {
+ 202:	f7 fe       	sbrs	r15, 7
+ 204:	6b cf       	rjmp	.-298    	; 0xdc <main+0x5c>
+   * infinite loop, and uses the aforementioned jumps both to select the right
+   * branch and jump at the start of the loop, without the need for an
+   * additional rjmp.
+   */
+  uint8_t getNextSample() {
+    elapsedTicks += ticksIncrement;
+ 206:	5c 56       	subi	r21, 0x6C	; 108
+ 208:	6d 4f       	sbci	r22, 0xFD	; 253
+ 20a:	7f 4f       	sbci	r23, 0xFF	; 255
+ 20c:	6b cf       	rjmp	.-298    	; 0xe4 <main+0x64>
 
-0000021c <_exit>:
- 21c:	f8 94       	cli
+0000020e <_exit>:
+ 20e:	f8 94       	cli
 
-0000021e <__stop_program>:
- 21e:	ff cf       	rjmp	.-2      	; 0x21e <__stop_program>
+00000210 <__stop_program>:
+ 210:	ff cf       	rjmp	.-2      	; 0x210 <__stop_program>

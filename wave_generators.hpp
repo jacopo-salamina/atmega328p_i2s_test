@@ -80,6 +80,51 @@ private:
   uint32_t ticksIncrement;
   uint8_t currentAmplitude;
   uint32_t elapsedTicks;
+  
+  /**
+   * This function returns the equivalent of this C expression:
+   *   elapsedTicks >= PERIOD_IN_TICKS / 2 ? amplitude : 0
+   * but computes it in a constant amount of CPU cycles.
+   * 
+   * The assembly code sets a register to 0, performs the comparison and then
+   * conditionally sets the same register to 0xff. The last two instructions are
+   * the key to compute the result in a constant time: brcs only skips one
+   * instruction, dec (which completes in one cycle), so skipping it or
+   * executing it always takes the same amount of time. The compiler, on the
+   * other hand, was less predictable.
+   * 
+   * The assembly code assumes that PERIOD_IN_TICKS / 2 is exactly 0x007A1200.
+   * This is because there are some hard-coded constants in it. In theory it
+   * should be possible to shape the assembly code at compile time, based on the
+   * actual value of PERIOD_IN_TICKS / 2. However, working on this wouldn't be
+   * really worth it, as I'm only planning to work on an Arduino UNO board, so
+   * the CPU frequency is always the same.
+   * 
+   * TODO Avoid the last bitwise AND and use the last assembly instruction to
+   *  copy amplitude into nextSample (this should save one instruction)
+   */
+  uint8_t compareAndReturnNextSampleInAssembly() {
+    static_assert(
+      PERIOD_IN_TICKS / 2 == 0x007A1200,
+      "PERIOD_IN_TICKS / 2 has changed! The assembly code must be revised here."
+    );
+    uint8_t tmp;
+    uint8_t nextSample;
+    asm volatile (
+      "eor %0, %0" "\n\t"
+      "cp %A2, __zero_reg__" "\n\t"
+      "ldi %1, 0x12" "\n\t"
+      "cpc %B2, %1" "\n\t"
+      "ldi %1, 0x7A" "\n\t"
+      "cpc %C2, %1" "\n\t"
+      "cpc %D2, __zero_reg__" "\n\t"
+      "brcs .+2" "\n\t"
+      "dec %0" "\n\t"
+      : "=&r" (nextSample), "=&d" (tmp)
+      : "r" (elapsedTicks)
+    );
+    return nextSample & amplitude;
+  }
 public:
   template<auto... Args>
   SquareWaveGenerator(
@@ -93,36 +138,60 @@ public:
     elapsedTicks(0)
   {}
 
+  uint8_t getFirstSample() {
+    return 0;
+  }
+
   /*
    * Determining the number of cycles needed by getNextSample() inside main() is
    * not trivial. There are multiple sections:
-   * - an rjmp instruction which is only run upon the first invocation (2
-   *   cycles);
-   * - a mov instruction which the aforementioned rjmp skips on purpose, which
-   *   means mov is run only on subsequent calls (1 cycle);
-   * - a section which is always run (13 cycles);
-   * - the section which makes sure elapsedTicks doesn't exceed 'PERIOD' (7
-   *   cycles);
+   * - a section which is always run (7 cycles);
+   * - the section which makes sure elapsedTicks doesn't exceed PERIOD_IN_TICKS
+   *   (7 cycles);
    *   - this part includes an if-else, and during the first tests each branch
    *     took a different amount of cycles, which made it impossible to reliably
-   *     count cycles; however, thanks to a couple of forced delays and some
-   *     help from the compiler, both branches now take the same number of
-   *     cycles;
-   * - another section which is always run (9 cycles).
-   * This means that, when getNextSample() is called the first time, it takes 31
-   * cycles, and the other times it takes 30 cycles.
-   * TODO Get rid of currentAmplitude
+   *     count cycles; however, thanks to a forced delay and some help from the
+   *     compiler, both branches now take the same number of cycles;
+   *   - part of these instructions also conveniently jump right before the
+   *     start of the main infinite loop;
+   * - compareAndReturnNextSampleInAssembly() which is always run (10 cycles);
+   * The entire method takes 24 cycles.
+   * 
+   * The section which makes sure elapsedTicks doesn't exceed PERIOD_IN_TICKS
+   * deserves an in-depth discussion on some technical aspects.
+   * 
+   * During previous revisions, there was no tmp variable, and the if was shaped
+   * slightly different (delays omitted for simplicity):
+   *   if (elapsedTicks >= PERIOD_IN_TICKS) {
+   *     elapsedTicks -= PERIOD_IN_TICKS;
+   *   }
+   * Evaluating this condition required the compiler to perform a series of cp
+   * and cpc instructions, and these essentially simulate a subtraction (in our
+   * case elapsedTicks - PERIOD_IN_TICKS); the branching instruction only needs
+   * to check against carry. Then, the code inside the if actually performs the
+   * same subtraction again, except this time it's not simulated. However,
+   * during some tests, I realized the compiler didn't figure this out and
+   * performed both the comparison and the subtraction, which was a considerable
+   * waste of CPU cycles. The tmp variable helps solving this problem. It stores
+   * the result of the actual subtraction, but cast as a signed integer; this
+   * way, the compiler suddenly realizes the branching instruction only needs to
+   * check against carry (or just test tmp's most significant bit, which is what
+   * it ended up doing).
+   * 
+   * The section relies on two rjmp instructions in order to select the right
+   * branch. Since there's hardly any way to avoid these jumps, the compiler
+   * cleverly puts the rest of the assembly code at the very start of the main
+   * infinite loop, and uses the aforementioned jumps both to select the right
+   * branch and jump at the start of the loop, without the need for an
+   * additional rjmp.
    */
   uint8_t getNextSample() {
-    uint8_t sample = currentAmplitude;
     elapsedTicks += ticksIncrement;
-    if (elapsedTicks >= PERIOD_IN_TICKS) {
-      elapsedTicks -= PERIOD_IN_TICKS;
-      delayInCycles<1>();
-    } else {
-      delayInCycles<1>();
+    int32_t tmp = elapsedTicks - PERIOD_IN_TICKS;
+    if (tmp >= 0) {
+      elapsedTicks = tmp;
+      delayInCyclesWithNOP<2>();
     }
-    currentAmplitude = elapsedTicks >= PERIOD_IN_TICKS / 2 ? amplitude : 0;
-    return sample;
+    return compareAndReturnNextSampleInAssembly();
   }
 };
