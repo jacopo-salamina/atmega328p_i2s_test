@@ -151,10 +151,10 @@ private:
   d2:	24 e0       	ldi	r18, 0x04	; 4
   d4:	a4 e1       	ldi	r26, 0x14	; 20
   d6:	fc e0       	ldi	r31, 0x0C	; 12
-      "cpc %D2, __zero_reg__" "\n\t"
+      "ldi %0, 0x00" "\n\t"
       "brcs .+2" "\n\t"
-      "mov %0, %3" "\n\t"
-      : "=&r" (nextSample), "=&d" (tmp)
+      "mov %0, %2" "\n\t"
+      : "=&d" (nextSample)
       : "r" (elapsedTicks), "r" (amplitude)
     );
   d8:	e0 e1       	ldi	r30, 0x10	; 16
@@ -169,13 +169,13 @@ inline void delayInCyclesWithNOP() {
   de:	00 00       	nop
   e0:	b7 01       	movw	r22, r14
   e2:	a6 01       	movw	r20, r12
-  e4:	99 27       	eor	r25, r25
-  e6:	41 15       	cp	r20, r1
-  e8:	32 e1       	ldi	r19, 0x12	; 18
-  ea:	53 07       	cpc	r21, r19
-  ec:	3a e7       	ldi	r19, 0x7A	; 122
-  ee:	63 07       	cpc	r22, r19
-  f0:	71 05       	cpc	r23, r1
+  e4:	41 15       	cp	r20, r1
+  e6:	92 e1       	ldi	r25, 0x12	; 18
+  e8:	59 07       	cpc	r21, r25
+  ea:	9a e7       	ldi	r25, 0x7A	; 122
+  ec:	69 07       	cpc	r22, r25
+  ee:	71 05       	cpc	r23, r1
+  f0:	90 e0       	ldi	r25, 0x00	; 0
   f2:	08 f0       	brcs	.+2      	; 0xf6 <main+0x76>
   f4:	9e 2f       	mov	r25, r30
     asm (

@@ -106,19 +106,18 @@ private:
       PERIOD_IN_TICKS / 2 == 0x007A1200,
       "PERIOD_IN_TICKS / 2 has changed! The assembly code must be revised here."
     );
-    uint8_t tmp;
     uint8_t nextSample;
     asm (
-      "eor %0, %0" "\n\t"
-      "cp %A2, __zero_reg__" "\n\t"
-      "ldi %1, 0x12" "\n\t"
-      "cpc %B2, %1" "\n\t"
-      "ldi %1, 0x7A" "\n\t"
-      "cpc %C2, %1" "\n\t"
-      "cpc %D2, __zero_reg__" "\n\t"
+      "cp %A1, __zero_reg__" "\n\t"
+      "ldi %0, 0x12" "\n\t"
+      "cpc %B1, %0" "\n\t"
+      "ldi %0, 0x7A" "\n\t"
+      "cpc %C1, %0" "\n\t"
+      "cpc %D1, __zero_reg__" "\n\t"
+      "ldi %0, 0x00" "\n\t"
       "brcs .+2" "\n\t"
-      "mov %0, %3" "\n\t"
-      : "=&r" (nextSample), "=&d" (tmp)
+      "mov %0, %2" "\n\t"
+      : "=&d" (nextSample)
       : "r" (elapsedTicks), "r" (amplitude)
     );
     return nextSample;
