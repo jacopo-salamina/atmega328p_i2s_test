@@ -132,12 +132,12 @@ private:
   c4:	99 e1       	ldi	r25, 0x19	; 25
   c6:	9a 95       	dec	r25
   c8:	f1 f7       	brne	.-4      	; 0xc6 <main+0x46>
-    uint32_t frequency
+    uint32_t frequency,
+    uint8_t amplitude
   ) :
-    amplitude(amplitude),
     ticksIncrement(driver.FRAME_PERIOD * frequency),
-    currentAmplitude(0),
-    elapsedTicks(0)
+    elapsedTicks(0),
+    amplitude(amplitude)
   ca:	40 e0       	ldi	r20, 0x00	; 0
   cc:	50 e0       	ldi	r21, 0x00	; 0
   ce:	ba 01       	movw	r22, r20

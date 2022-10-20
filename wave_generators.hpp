@@ -76,10 +76,9 @@
 class SquareWaveGenerator {
 private:
   static const uint32_t PERIOD_IN_TICKS = F_CPU;
-  uint8_t amplitude;
   uint32_t ticksIncrement;
-  uint8_t currentAmplitude;
   uint32_t elapsedTicks;
+  uint8_t amplitude;
   
   /**
    * This function returns the equivalent of this C expression:
@@ -126,13 +125,12 @@ public:
   template<auto... Args>
   SquareWaveGenerator(
     const I2SDriver<Args...>& driver,
-    uint8_t amplitude,
-    uint32_t frequency
+    uint32_t frequency,
+    uint8_t amplitude
   ) :
-    amplitude(amplitude),
     ticksIncrement(driver.FRAME_PERIOD * frequency),
-    currentAmplitude(0),
-    elapsedTicks(0)
+    elapsedTicks(0),
+    amplitude(amplitude)
   {}
 
   uint8_t getFirstSample() {

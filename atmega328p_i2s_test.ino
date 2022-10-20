@@ -23,7 +23,7 @@ int main() {
    * Also, the compiler decided to initialize generator later, right before the
    * main loop.
    */
-  SquareWaveGenerator generator(driver, 16, 440);
+  SquareWaveGenerator generator(driver, 440, 16);
   driver.start();
   // Both timer 0 and 2's counters should read 0.
   delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 13>();
