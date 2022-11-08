@@ -132,10 +132,10 @@ private:
   c4:	99 e1       	ldi	r25, 0x19	; 25
   c6:	9a 95       	dec	r25
   c8:	f1 f7       	brne	.-4      	; 0xc6 <main+0x46>
-    uint32_t frequency,
-    uint8_t amplitude
-  ) :
-    ticksIncrement(driver.FRAME_PERIOD * frequency),
+  }
+public:
+  SquareWaveGenerator(uint32_t frequency, uint8_t amplitude) :
+    ticksIncrement(FRAME_PERIOD_IN_CYCLES * frequency),
     elapsedTicks(0),
     amplitude(amplitude)
   ca:	40 e0       	ldi	r20, 0x00	; 0

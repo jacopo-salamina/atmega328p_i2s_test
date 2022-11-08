@@ -14,7 +14,9 @@ const uint8_t SAMPLE_WIDTH = 12;
 
 
 int main() {
-  I2SDriver<SAMPLE_WIDTH> driver;
+  using MyDriver = I2SDriver<SAMPLE_WIDTH>;
+  
+  MyDriver driver;
   /*
    * generator.PERIOD_IN_TICKS is 0x00F42400 (16e6), half
    * generator.PERIOD_IN_TICKS is 0x007A1200, generator.ticksIncrement is
@@ -23,7 +25,7 @@ int main() {
    * Also, the compiler decided to initialize generator later, right before the
    * main loop.
    */
-  SquareWaveGenerator generator(driver, 440, 16);
+  SquareWaveGenerator<MyDriver::FRAME_PERIOD> generator(440, 16);
   driver.start();
   // Both timer 0 and 2's counters should read 0.
   delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 13>();

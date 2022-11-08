@@ -1,6 +1,7 @@
 #pragma once
 
 #include "i2s_driver.hpp"
+#include "type_traits_clone.hpp"
 
 
 /**
@@ -73,6 +74,10 @@
  * we're using a smaller unit, a "tick", such that a clock cycle contains
  * exactly F_WAVE ticks.
  */
+template<
+  uint16_t FRAME_PERIOD_IN_CYCLES,
+  enable_if_t<FRAME_PERIOD_IN_CYCLES, int> = 0
+>
 class SquareWaveGenerator {
 private:
   static const uint32_t PERIOD_IN_TICKS = F_CPU;
@@ -122,13 +127,8 @@ private:
     return nextSample;
   }
 public:
-  template<auto... Args>
-  SquareWaveGenerator(
-    const I2SDriver<Args...>& driver,
-    uint32_t frequency,
-    uint8_t amplitude
-  ) :
-    ticksIncrement(driver.FRAME_PERIOD * frequency),
+  SquareWaveGenerator(uint32_t frequency, uint8_t amplitude) :
+    ticksIncrement(FRAME_PERIOD_IN_CYCLES * frequency),
     elapsedTicks(0),
     amplitude(amplitude)
   {}
