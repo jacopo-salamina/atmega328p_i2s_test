@@ -10,30 +10,13 @@
 //                                                                          80 |
 
 
-const uint8_t SAMPLE_WIDTH = 12;
-
-
 int main() {
-  using MyDriver = I2SDriver<SAMPLE_WIDTH>;
-  
+  using MyDriver = I2SDriver<5, 7>;
+
   MyDriver driver;
-  /*
-   * generator.PERIOD_IN_TICKS is 0x00F42400 (16e6), half
-   * generator.PERIOD_IN_TICKS is 0x007A1200, generator.ticksIncrement is
-   * 0x00029400 (168960) and generator.PERIOD_IN_TICKS minus
-   * generator.ticksIncrement is 0x00F19000 (it will be used later).
-   * Also, the compiler decided to initialize generator later, right before the
-   * main loop.
-   */
   SquareWaveGenerator<MyDriver::FRAME_PERIOD> generator(440, 16);
-  driver.start();
-  // Both timer 0 and 2's counters should read 0.
-  delayInCyclesWithLoop<driver.BIT_PERIOD * 5 + 8 - 13>();
-  /*
-   * Timer 2's counter should read 8 (prescaler 4). Also sample is initialized
-   * slightly later.
-   */
-  uint8_t sample = generator.getFirstSample();
+  int16_t sample = generator.getFirstSample();
+  delayInCyclesWithNOP<driver.getCyclesForNextTransmissionStart(7 + 3 + 2)>();
   /*
    * Right before starting the infinite loop, the compiler initializes:
    * - generator.elapsedTicks, (3 cycles);
@@ -52,7 +35,7 @@ int main() {
      * By the time driver.sendSample(sample) completes, timer 2's counter should
      * read 2 (overflowed once, prescaler 0).
      */
-    delayInCyclesWithLoop<driver.BIT_PERIOD * 4 - 3>();
+    delayInCyclesWithLoop<driver.SAMPLE_PERIOD - 5>();
     // Timer 2's counter should read 9 (prescaler 5).
     driver.sendSample(sample);
     /*
@@ -63,7 +46,13 @@ int main() {
      * The additional delay needed for the processor to jump back at the start
      * of the loop is already integrated in generator.getNextSample().
      */
-    delayInCyclesWithLoop<driver.BIT_PERIOD * 4 - 26>();
+    delayInCyclesWithLoop<driver.SAMPLE_PERIOD - 5 - 25>();
+    /*
+     * - 6 (1st common part)
+     * - 7 (1st branch)
+     * - 6 (2nd common part)
+     * - 6 (2nd branch)
+     */
     sample = generator.getNextSample();
   }
   return 0;

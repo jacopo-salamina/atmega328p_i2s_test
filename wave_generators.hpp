@@ -83,7 +83,7 @@ private:
   static const uint32_t PERIOD_IN_TICKS = F_CPU;
   uint32_t ticksIncrement;
   uint32_t elapsedTicks;
-  uint8_t amplitude;
+  int16_t amplitude;
   
   /**
    * This function returns the equivalent of this C expression:
@@ -126,14 +126,15 @@ private:
     );
     return nextSample;
   }
+
 public:
-  SquareWaveGenerator(uint32_t frequency, uint8_t amplitude) :
+  SquareWaveGenerator(uint32_t frequency, int16_t amplitude) :
     ticksIncrement(FRAME_PERIOD_IN_CYCLES * frequency),
     elapsedTicks(0),
     amplitude(amplitude)
   {}
 
-  uint8_t getFirstSample() {
+  int16_t getFirstSample() {
     return 0;
   }
 
@@ -180,13 +181,19 @@ public:
    * branch and jump at the start of the loop, without the need for an
    * additional rjmp.
    */
-  uint8_t getNextSample() {
+  int16_t getNextSample() {
     elapsedTicks += ticksIncrement;
     int32_t tmp = elapsedTicks - PERIOD_IN_TICKS;
     if (tmp >= 0) {
+      delayInCyclesWithNOP<4>();
       elapsedTicks = tmp;
-      delayInCyclesWithNOP<2>();
     }
-    return compareAndReturnNextSampleInAssembly();
+    // return compareAndReturnNextSampleInAssembly();
+    if (elapsedTicks >= PERIOD_IN_TICKS / 2) {
+      return amplitude;
+    } else {
+      delayInCyclesWithNOP<1>();
+      return -amplitude;
+    }
   }
 };
