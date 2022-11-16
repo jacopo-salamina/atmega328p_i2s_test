@@ -11,48 +11,39 @@
 
 
 int main() {
+  /*
+   * Setting HALF_BIT_PERIOD to 5 results in a sampling rate of 50 kHz (good
+   * enough for frequencies up to 25 kHz, well beyond the typical human ear
+   * range).
+   * 
+   * BUSY_EXTERNAL_CYCLES_BEFORE_FIRST_BUFFER_WRITE takes into account:
+   * - the initialization of generator (3 cycles);
+   * - generator.getFirstSample() (2 cycles);
+   * - two constants for generating delays (2 cycles).
+   */
   using MyDriver = I2SDriver<5, 7>;
 
+  /*
+   * The various constructors and function calls have been reordered to match the
+   * actual machine code. Moving the initialization of generator and the call to
+   * generator.getFirstSample() had no effect (probably because there are no side
+   * effects involved, and the compiler chose to recycle some registers).
+   */
   MyDriver driver;
+  delayInCyclesWithNOP<
+    driver.OTHER_EXTERNAL_DELAY_CYCLES_BEFORE_FIRST_BUFFER_WRITE
+  >();
   SquareWaveGenerator<MyDriver::FRAME_PERIOD> generator(440, 16);
   int16_t sample = generator.getFirstSample();
-  delayInCyclesWithNOP<driver.getCyclesForNextTransmissionStart(7 + 3 + 2)>();
-  /*
-   * Right before starting the infinite loop, the compiler initializes:
-   * - generator.elapsedTicks, (3 cycles);
-   * - sample (1 cycle);
-   * - generator.amplitude (1 cycle);
-   * - three constants for delayInCycles() (3 cycles).
-   * After that, the CPU uses rjmp to skip a part of generator.getNextSample()
-   * (2 cycles).
-   * At this point, timer 2's counter should read 9 (prescaler 5).
-   */
   for (;;) {
     driver.sendSample(sample);
-    /*
-     * As soon as the first bit is sent, timer 2's counter should read 10
-     * (prescaler 0).
-     * By the time driver.sendSample(sample) completes, timer 2's counter should
-     * read 2 (overflowed once, prescaler 0).
-     */
-    delayInCyclesWithLoop<driver.SAMPLE_PERIOD - 5>();
-    // Timer 2's counter should read 9 (prescaler 5).
+    delayInCyclesWithLoop<driver.SAMPLE_PERIOD - driver.SEND_SAMPLE_DURATION>();
     driver.sendSample(sample);
-    /*
-     * Again, as soon as the first bit is sent, timer 2's counter should read 10
-     * (prescaler 0).
-     * By the time driver.sendSample(sample) completes, timer 2's counter should
-     * read 2 (overflowed once, prescaler 0).
-     * The additional delay needed for the processor to jump back at the start
-     * of the loop is already integrated in generator.getNextSample().
-     */
-    delayInCyclesWithLoop<driver.SAMPLE_PERIOD - 5 - 25>();
-    /*
-     * - 6 (1st common part)
-     * - 7 (1st branch)
-     * - 6 (2nd common part)
-     * - 6 (2nd branch)
-     */
+    delayInCyclesWithLoop<
+      driver.SAMPLE_PERIOD
+      - driver.SEND_SAMPLE_DURATION
+      - generator.GET_NEXT_SAMPLE_DURATION
+    >();
     sample = generator.getNextSample();
   }
   return 0;

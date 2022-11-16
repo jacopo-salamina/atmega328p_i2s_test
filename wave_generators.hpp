@@ -34,8 +34,8 @@
  * With this algorithm, the value of T_ELAPSED is a periodic snapshot of an
  * ideal sawtooth generator. Going from this to a square wave generator is easy:
  * we just need to compare T_ELAPSED against T_WAVE / 2, and if the former is
- * smaller we output 0, otherwise we output a user-defined amplitude. Of course,
- * we could do this the other way around.
+ * greater or equal we output a user-defined amplitude, otherwise we output its
+ * opposite value. Of course, we could do this the other way around.
  * 
  * Despite being an "ideal" algorithm, it still doesn't produce a clean square
  * wave, and that's because of the sampling rate not being (usually) a multiple
@@ -85,49 +85,12 @@ private:
   uint32_t elapsedTicks;
   int16_t amplitude;
   
-  /**
-   * This function returns the equivalent of this C expression:
-   *   elapsedTicks >= PERIOD_IN_TICKS / 2 ? amplitude : 0
-   * but computes it in a constant amount of CPU cycles.
-   * 
-   * The assembly code sets a register to 0, performs the comparison and then
-   * conditionally copies amplitude to that register. The last two instructions
-   * are the key to compute the result in a constant time: brcs only skips one
-   * instruction, mov (which completes in one cycle), so skipping it or
-   * executing it always takes the same amount of time. The compiler, on the
-   * other hand, was less predictable.
-   * 
-   * The assembly code assumes that PERIOD_IN_TICKS / 2 is exactly 0x007A1200.
-   * This is because there are some hard-coded constants in it. In theory it
-   * should be possible to shape the assembly code at compile time, based on the
-   * actual value of PERIOD_IN_TICKS / 2. However, working on this wouldn't be
-   * really worth it, as I'm only planning to work on an Arduino UNO board, so
-   * the CPU frequency is always the same. Just to make sure, I added a static
-   * assertion against PERIOD_IN_TICKS / 2.
-   */
-  uint8_t compareAndReturnNextSampleInAssembly() {
-    static_assert(
-      PERIOD_IN_TICKS / 2 == 0x007A1200,
-      "PERIOD_IN_TICKS / 2 has changed! The assembly code must be revised here."
-    );
-    uint8_t nextSample;
-    asm (
-      "cp %A1, __zero_reg__" "\n\t"
-      "ldi %0, 0x12" "\n\t"
-      "cpc %B1, %0" "\n\t"
-      "ldi %0, 0x7A" "\n\t"
-      "cpc %C1, %0" "\n\t"
-      "cpc %D1, __zero_reg__" "\n\t"
-      "ldi %0, 0x00" "\n\t"
-      "brcs .+2" "\n\t"
-      "mov %0, %2" "\n\t"
-      : "=&d" (nextSample)
-      : "r" (elapsedTicks), "r" (amplitude)
-    );
-    return nextSample;
-  }
-
 public:
+  /**
+   * The number of CPU cycles required to run getNextSample()
+   */
+  static constexpr uint8_t GET_NEXT_SAMPLE_DURATION = 25;
+
   SquareWaveGenerator(uint32_t frequency, int16_t amplitude) :
     ticksIncrement(FRAME_PERIOD_IN_CYCLES * frequency),
     elapsedTicks(0),
@@ -141,17 +104,25 @@ public:
   /*
    * Determining the number of cycles needed by getNextSample() inside main() is
    * not trivial. There are multiple sections:
-   * - a section which is always run (7 cycles);
+     * - 6 (1st common part)
+     * - 7 (1st branch)
+     * - 6 (2nd common part)
+     * - 6 (2nd branch)
+   * - a section which is always run (6 cycles);
    * - the section which makes sure elapsedTicks doesn't exceed PERIOD_IN_TICKS
    *   (7 cycles);
    *   - this part includes an if-else, and during the first tests each branch
    *     took a different amount of cycles, which made it impossible to reliably
-   *     count cycles; however, thanks to a forced delay and some help from the
-   *     compiler, both branches now take the same number of cycles;
-   *   - part of these instructions also conveniently jump right before the
-   *     start of the main infinite loop;
-   * - compareAndReturnNextSampleInAssembly() which is always run (9 cycles);
-   * The entire method takes 23 cycles.
+   *     count cycles; however, thanks to a forced delay, both branches now take
+   *     the same number of cycles;
+   * - a second section for comparing elapsedTicks to PERIOD_IN_TICKS / 2, which
+   *   is always run (6 cycles);
+   * - a section for returning either amplitude or -amplitude (6 cycles);
+   *   - like the first if-else, a forced delay made sure both branches took the
+   *     same number of cycles;
+   *   - the machine code includes the jumps required to go back to the start of
+   *     the infinite loop inside main().
+   * The entire method takes 25 cycles.
    * 
    * The section which makes sure elapsedTicks doesn't exceed PERIOD_IN_TICKS
    * deserves an in-depth discussion on some technical aspects.
@@ -173,13 +144,6 @@ public:
    * way, the compiler suddenly realizes the branching instruction only needs to
    * check against carry (or just test tmp's most significant bit, which is what
    * it ended up doing).
-   * 
-   * The section relies on two rjmp instructions in order to select the right
-   * branch. Since there's hardly any way to avoid these jumps, the compiler
-   * cleverly puts the rest of the assembly code at the very start of the main
-   * infinite loop, and uses the aforementioned jumps both to select the right
-   * branch and jump at the start of the loop, without the need for an
-   * additional rjmp.
    */
   int16_t getNextSample() {
     elapsedTicks += ticksIncrement;
@@ -188,7 +152,6 @@ public:
       delayInCyclesWithNOP<4>();
       elapsedTicks = tmp;
     }
-    // return compareAndReturnNextSampleInAssembly();
     if (elapsedTicks >= PERIOD_IN_TICKS / 2) {
       return amplitude;
     } else {

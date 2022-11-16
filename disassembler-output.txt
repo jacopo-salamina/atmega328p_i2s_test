@@ -44,11 +44,11 @@ Disassembly of section .text:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 00000080 <main>:
-      + 2
-      + getCyclesForNextTransmissionStart(
-        DELAY_CYCLES_BEFORE_1ST_TRANSMISSION + 2 + 3
-      );
-    
+   * right channel)
+   */
+  static const uint16_t FRAME_PERIOD = SAMPLE_PERIOD * 2;
+
+  I2SDriver() {
     noInterrupts();
   80:	f8 94       	cli
     /*
@@ -58,10 +58,10 @@ Disassembly of section .text:
     DDRD = bit(DDD6) | bit(DDD4) | bit(DDD1);
   82:	82 e5       	ldi	r24, 0x52	; 82
   84:	8a b9       	out	0x0a, r24	; 10
->
-class I2SDriver {
-private:
-  static void configureTimer0(const uint8_t cyclesForNextTransmission) {
+      CYCLES_FOR_SYNCING_WORD_SELECT_WITH_USART_CLOCK + SAMPLE_PERIOD - 1 < 256,
+      "The word select signal is not low on the first sample!"
+    );
+
     // Fast PWM (mode 7, continues below), don't start the timer yet
     TCCR0B = bit(WGM02);
   86:	88 e0       	ldi	r24, 0x08	; 8
@@ -70,10 +70,15 @@ private:
     TCCR0A = bit(COM0A0) | bit(WGM01) | bit(WGM00);
   8a:	93 e4       	ldi	r25, 0x43	; 67
   8c:	94 bd       	out	0x24, r25	; 36
+     * Also notice that, because SAMPLE_PERIOD = 32 * HALF_BIT_PERIOD and OCR0A
+     * is a 8-bit register, SAMPLE_PERIOD can't exceed 256, which translates
+     * into HALF_BIT_PERIOD <= 8. This is the reason for the upper limit on
+     * HALF_BIT_PERIOD.
+     */
     OCR0A = SAMPLE_PERIOD - 1;
   8e:	9f e9       	ldi	r25, 0x9F	; 159
   90:	97 bd       	out	0x27, r25	; 39
-    TCNT0 = FULL_BIT_PERIOD - cyclesForNextTransmission - 2;
+    TCNT0 = -CYCLES_FOR_SYNCING_WORD_SELECT_WITH_USART_CLOCK;
   92:	9d ef       	ldi	r25, 0xFD	; 253
   94:	96 bd       	out	0x26, r25	; 38
   }
@@ -94,7 +99,10 @@ private:
     // Only transmitter enabled.
     UCSR0B = bit(TXEN0);
   a4:	80 93 c1 00 	sts	0x00C1, r24	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
-    // UBRR0 finally configured; the internal counter starts counting down now.
+    /*
+     * UBRR0 finally configured; the internal counter should be reset on the
+     * next cycle.
+     */
     UBRR0 = HALF_BIT_PERIOD - 1;
   a8:	84 e0       	ldi	r24, 0x04	; 4
   aa:	90 e0       	ldi	r25, 0x00	; 0
@@ -102,7 +110,7 @@ private:
   b0:	80 93 c4 00 	sts	0x00C4, r24	; 0x8000c4 <__DATA_REGION_ORIGIN__+0x64>
      */
     DDRD = bit(DDD6) | bit(DDD4) | bit(DDD1);
-    configureTimer0(cyclesForNextTransmission);
+    configureTimer0();
     configureUSART();
     // Start timer 0 (without prescaler)
     bitSet(TCCR0B, CS00);
@@ -117,8 +125,8 @@ inline void delayInCyclesWithNOP() {
       _NOP();
   ba:	00 00       	nop
   bc:	00 00       	nop
+  static constexpr uint8_t GET_NEXT_SAMPLE_DURATION = 25;
 
-public:
   SquareWaveGenerator(uint32_t frequency, int16_t amplitude) :
     ticksIncrement(FRAME_PERIOD_IN_CYCLES * frequency),
     elapsedTicks(0),
@@ -126,10 +134,10 @@ public:
   be:	80 e0       	ldi	r24, 0x00	; 0
   c0:	90 e0       	ldi	r25, 0x00	; 0
   c2:	dc 01       	movw	r26, r24
-int main() {
-  using MyDriver = I2SDriver<5, 7>;
-
   MyDriver driver;
+  delayInCyclesWithNOP<
+    driver.OTHER_EXTERNAL_DELAY_CYCLES_BEFORE_FIRST_BUFFER_WRITE
+  >();
   SquareWaveGenerator<MyDriver::FRAME_PERIOD> generator(440, 16);
   int16_t sample = generator.getFirstSample();
   c4:	30 e0       	ldi	r19, 0x00	; 0
@@ -142,14 +150,16 @@ int main() {
 	);
   c8:	f3 e3       	ldi	r31, 0x33	; 51
   ca:	eb e2       	ldi	r30, 0x2B	; 43
-   * routine which uses bst and bld. Since these two instructions use constants
-   * for targeting a specific bit, there was no way of using the loop variable;
-   * thus, the original loop was replaced by a recursive template function.
-   */
+  }
+
   void sendSample(const int16_t sample) {
     UDR0 = int8_t(sample >> 8);
   cc:	20 93 c6 00 	sts	0x00C6, r18	; 0x8000c6 <__DATA_REGION_ORIGIN__+0x66>
   d0:	00 00       	nop
+     * sts instructions one right after another, the second one is executed 2
+     * cycles after the first one, but after some testing this seems not to be
+     * enough. Thus, an additional 1-cycle delay was added.
+     */
     delayInCyclesWithNOP<1>();
     UDR0 = uint8_t(sample & 0xff);
   d2:	30 93 c6 00 	sts	0x00C6, r19	; 0x8000c6 <__DATA_REGION_ORIGIN__+0x66>
@@ -158,14 +168,18 @@ int main() {
   da:	f1 f7       	brne	.-4      	; 0xd8 <main+0x58>
   dc:	00 00       	nop
   de:	00 00       	nop
-   * routine which uses bst and bld. Since these two instructions use constants
-   * for targeting a specific bit, there was no way of using the loop variable;
-   * thus, the original loop was replaced by a recursive template function.
-   */
+    // Start timer 0 (without prescaler)
+    bitSet(TCCR0B, CS00);
+  }
+
   void sendSample(const int16_t sample) {
     UDR0 = int8_t(sample >> 8);
   e0:	20 93 c6 00 	sts	0x00C6, r18	; 0x8000c6 <__DATA_REGION_ORIGIN__+0x66>
   e4:	00 00       	nop
+     * sts instructions one right after another, the second one is executed 2
+     * cycles after the first one, but after some testing this seems not to be
+     * enough. Thus, an additional 1-cycle delay was added.
+     */
     delayInCyclesWithNOP<1>();
     UDR0 = uint8_t(sample & 0xff);
   e6:	30 93 c6 00 	sts	0x00C6, r19	; 0x8000c6 <__DATA_REGION_ORIGIN__+0x66>
@@ -173,8 +187,8 @@ int main() {
   ec:	2a 95       	dec	r18
   ee:	f1 f7       	brne	.-4      	; 0xec <main+0x6c>
   f0:	00 00       	nop
-   * branch and jump at the start of the loop, without the need for an
-   * additional rjmp.
+   * check against carry (or just test tmp's most significant bit, which is what
+   * it ended up doing).
    */
   int16_t getNextSample() {
     elapsedTicks += ticksIncrement;
@@ -196,7 +210,6 @@ int main() {
       delayInCyclesWithNOP<4>();
       elapsedTicks = tmp;
     }
-    // return compareAndReturnNextSampleInAssembly();
     if (elapsedTicks >= PERIOD_IN_TICKS / 2) {
  10c:	81 15       	cp	r24, r1
  10e:	22 e1       	ldi	r18, 0x12	; 18
@@ -213,18 +226,18 @@ int main() {
  11c:	30 ef       	ldi	r19, 0xF0	; 240
  11e:	2f ef       	ldi	r18, 0xFF	; 255
  120:	d5 cf       	rjmp	.-86     	; 0xcc <main+0x4c>
+    if (tmp >= 0) {
       delayInCyclesWithNOP<4>();
       elapsedTicks = tmp;
     }
-    // return compareAndReturnNextSampleInAssembly();
     if (elapsedTicks >= PERIOD_IN_TICKS / 2) {
       return amplitude;
  122:	30 e1       	ldi	r19, 0x10	; 16
  124:	20 e0       	ldi	r18, 0x00	; 0
  126:	d2 cf       	rjmp	.-92     	; 0xcc <main+0x4c>
-   * infinite loop, and uses the aforementioned jumps both to select the right
-   * branch and jump at the start of the loop, without the need for an
-   * additional rjmp.
+   * way, the compiler suddenly realizes the branching instruction only needs to
+   * check against carry (or just test tmp's most significant bit, which is what
+   * it ended up doing).
    */
   int16_t getNextSample() {
     elapsedTicks += ticksIncrement;
